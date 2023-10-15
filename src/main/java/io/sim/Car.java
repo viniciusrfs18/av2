@@ -448,8 +448,13 @@ public class Car extends Thread
 		return this.fuelTank = fuelLevel;
 	}
 
-	public void setFullFuelLevel(){
+	public double qtdRefuel(){
 		double NeedQtd = 10 - getFuelLevel();
+		return NeedQtd;
+	}
+
+	public void setFullFuelLevel(){
+		double NeedQtd = qtdRefuel();
 
 		System.out.println(idAuto + " Abasteceu(L): " + NeedQtd);
 		//System.out.println(idAuto + " gastou: " + payment(NeedQtd));

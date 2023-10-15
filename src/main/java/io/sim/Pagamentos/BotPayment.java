@@ -34,7 +34,8 @@ public class BotPayment extends Thread {
 
             // Aguarde a resposta do servidor AlphaBank
             String jsonResponse = inputStream.readUTF();
-
+            System.out.println(jsonResponse);
+            
             // Analise a resposta em formato JSON
             boolean success = parseJsonResponse(jsonResponse);
 

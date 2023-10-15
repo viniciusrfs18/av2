@@ -7,12 +7,14 @@ import io.sim.Pagamentos.Account;
 public class FuelStation extends Thread {
     private Semaphore fuelPumps;
     private Account account;
+    private double fuelPrice;
     //private AlphaBankClient alphaBankClient;
 
     public FuelStation() {
         this.fuelPumps = new Semaphore(2); // Duas bombas de combustível disponíveis
         //this.alphaBankClient = alphaBankClient;
         this.account = new Account(1, 0);
+        this.fuelPrice = 5.87;
     }
 
     public void refuelCar(Car car) throws Exception {
@@ -48,5 +50,10 @@ public class FuelStation extends Thread {
     public Account getAccount(){
         return this.account;
     }
+
+    public double getFuelPrice(){
+        return this.fuelPrice;
+    }
+    
 
 }

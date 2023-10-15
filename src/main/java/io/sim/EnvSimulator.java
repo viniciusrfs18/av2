@@ -26,7 +26,7 @@ public class EnvSimulator extends Thread
 	private static final int PORT_BANK = 33333;
 	private static final String ROTAS_XML = "map/map.rou.alt.xml";
 	//"data/dados2.xml"
-	private static final int NUM_DRIVERS = 1; 
+	private static final int NUM_DRIVERS = 2; 
 	
 
     public EnvSimulator(){}

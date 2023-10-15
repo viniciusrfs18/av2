@@ -1,17 +1,22 @@
 package io.sim;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import io.sim.Pagamentos.Account;
+import io.sim.Pagamentos.BotPayment;
 import io.sim.Rotas.Rotas;
 import io.sim.MobilityCompany.Company;
 
 public class Driver extends Thread
 {
     private String driverID;
-    // // Cliente de AlphaBank
-    // private Account account;
-    // private TransportService ts;
+    
+    // cliente AlphaBank
+    private Socket socket;
+    
     private Car car; // private Car car;
     // private static final double FUEL_PRICE = 5.87;
    
@@ -23,14 +28,22 @@ public class Driver extends Thread
     private ArrayList<Rotas> routesInExe = new ArrayList<Rotas>();
     private boolean initRoute = false;
 
-    public Driver(String _driverID, Car _car, long _acquisitionRate, Account account)
+    public Driver(String _driverID, Car _car, long _acquisitionRate, Account account, FuelStation fs)
     {
         this.driverID = _driverID;
         this.car = _car;
         this.acquisitionRate = _acquisitionRate;
         this.account = account;
-        //this.fs = fs;
+        this.fs = fs;
         
+        try {
+            this.socket = new Socket("localhost", 33333);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        };
+
         this.start();
         // pensar na logica de inicializacao do TransporteService e do Car
         // this.car.start();
@@ -66,6 +79,19 @@ public class Driver extends Thread
                 
                 }
 
+                //System.out.println(this.car.getFuelLevel());
+
+                System.out.println(this.driverID + " possui o saldo de " + this.account.getBalance());
+
+                if (this.car.getFuelLevel() < 7.5){
+                    this.car.stopToFuel();
+                    double qtd = this.car.qtdRefuel();
+                    fs.refuelCar(this.car);
+                    fsPay(qtd*fs.getFuelPrice());
+                    //System.out.println("Pagamento realizado para a fuel station");
+                    
+                }
+
             }
 
             this.car.setfinished(true);  
@@ -86,5 +112,13 @@ public class Driver extends Thread
 
     public String getDriverId(){
         return this.driverID;
+    }
+
+    public void fsPay(double amount){
+        BotPayment bt = new BotPayment(socket, getAccount().getIdentifier(), 1, amount);
+        bt.start();
+      
+        // Criar uma BotPayment - Syncronized -> passar para ele o socket, id do motorista que precisa receber e passar o valor()
+        // Neste momento, fazer o start do BotPaymento
     }
 }

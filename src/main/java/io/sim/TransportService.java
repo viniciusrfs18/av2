@@ -76,12 +76,6 @@ public class TransportService extends Thread {
 						
 						car.setFuelSpend();
 
-						
-
-						if (car.getFuelLevel() < 8.2){
-							this.car.stopToFuel();
-							fs.refuelCar(this.car);
-						}
 
 					}
 					sumoInit = false;
