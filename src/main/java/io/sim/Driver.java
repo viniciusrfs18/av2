@@ -5,6 +5,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
+import org.python.modules.synchronize;
+
 import io.sim.Pagamentos.Account;
 import io.sim.Pagamentos.BotPayment;
 import io.sim.Rotas.Rotas;
@@ -35,14 +37,6 @@ public class Driver extends Thread
         this.acquisitionRate = _acquisitionRate;
         this.account = account;
         this.fs = fs;
-        
-        try {
-            this.socket = new Socket("localhost", 33333);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        };
 
         this.start();
         // pensar na logica de inicializacao do TransporteService e do Car
@@ -114,8 +108,17 @@ public class Driver extends Thread
         return this.driverID;
     }
 
-    public void fsPay(double amount){
-        BotPayment bt = new BotPayment(socket, getAccount().getIdentifier(), 1, amount);
+    public synchronized void fsPay(double amount){
+
+        try {
+            this.socket = new Socket("127.0.0." + this.account.getIdentifier(), 33333);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        };
+
+        BotPayment bt = new BotPayment(this.socket, getAccount().getIdentifier(), 1, amount);
         bt.start();
       
         // Criar uma BotPayment - Syncronized -> passar para ele o socket, id do motorista que precisa receber e passar o valor()

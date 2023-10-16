@@ -180,13 +180,22 @@ public class Company extends Thread {
     }
 
     public void OneKmPay(String driverID){
-        System.out.println(driverID);
+        
+        try {
+            this.socket = new Socket("localhost", 33333);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        };
+        
+        //System.out.println(driverID);
         int contaDriv = searchAccount(driverID);
         if (contaDriv == -1){
             System.out.println("Conta inexistente");
         } else  {
             //System.out.println("Entrou no OnePay e a Conta foi encontrada");
-            BotPayment bt = new BotPayment(socket, 0, contaDriv, RUN_PRICE);
+            BotPayment bt = new BotPayment(this.socket, 0, contaDriv, RUN_PRICE);
             bt.start();
         }        
         

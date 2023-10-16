@@ -26,7 +26,7 @@ public class EnvSimulator extends Thread
 	private static final int PORT_BANK = 33333;
 	private static final String ROTAS_XML = "map/map.rou.alt.xml";
 	//"data/dados2.xml"
-	private static final int NUM_DRIVERS = 2; 
+	private static final int NUM_DRIVERS = 1; 
 	
 
     public EnvSimulator(){}
@@ -40,7 +40,7 @@ public class EnvSimulator extends Thread
 		// Sumo connection
 		this.sumo = new SumoTraciConnection(sumo_bin, config_file);
 		sumo.addOption("start", "1"); // auto-run on GUI show
-		//sumo.addOption("quit-on-end", "1"); // auto-close on end
+		sumo.addOption("quit-on-end", "1"); // auto-close on end
 
 		try
 		{

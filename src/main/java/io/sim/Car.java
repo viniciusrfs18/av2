@@ -469,7 +469,7 @@ public class Car extends Thread
 	public void setFuelSpend() throws Exception{
 		//double spend = (double) sumo.do_job_get(Vehicle.getFuelConsumption(this.idAuto));
 		if ((double) sumo.do_job_get(Vehicle.getSpeed(this.idAuto)) != 0){
-			double spend = 0.1;
+			double spend = 0.025;
 			double aux = (getFuelLevel()  - spend);
 			setFuelLevel(aux);
 		}
