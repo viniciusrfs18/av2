@@ -29,7 +29,7 @@ public class criadorMotoristas {
 				String carHost = "localhost";// + i+1;
 				Car car = new Car(carHost,PORT_COMPANY,true, "CAR" + (i+1), cor, driverID, sumo, AQUISITION_RATE, FUEL_TYPE, FUEL_PREFERENTIAL, FUEL_PRICE,
 				PERSON_CAPACITY, PERSON_NUMBER, fs);
-				Driver driver = new Driver(driverID, car, AQUISITION_RATE, account);
+				Driver driver = new Driver(driverID, car, AQUISITION_RATE, account, fs);
 				drivers.add(driver);
 		}
 

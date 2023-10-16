@@ -33,16 +33,21 @@ public class BotPayment extends Thread {
             //outputStream.flush();
 
             // Aguarde a resposta do servidor AlphaBank
-            String jsonResponse = inputStream.readUTF();
-
+           
+            //String jsonResponse = inputStream.readUTF();
+            //System.out.println(jsonResponse);
+            
+            /**
             // Analise a resposta em formato JSON
             boolean success = parseJsonResponse(jsonResponse);
 
+             
             if (success) {
                 System.out.println("Transferência bem-sucedida!");
             } else {
                 System.out.println("Transferência falhou. Verifique o saldo ou a existência das contas.");
-            }
+            }*/
+            
 
             // Feche a conexão
             socket.close();

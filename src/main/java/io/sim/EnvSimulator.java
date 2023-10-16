@@ -40,7 +40,7 @@ public class EnvSimulator extends Thread
 		// Sumo connection
 		this.sumo = new SumoTraciConnection(sumo_bin, config_file);
 		sumo.addOption("start", "1"); // auto-run on GUI show
-		//sumo.addOption("quit-on-end", "1"); // auto-close on end
+		sumo.addOption("quit-on-end", "1"); // auto-close on end
 
 		try
 		{

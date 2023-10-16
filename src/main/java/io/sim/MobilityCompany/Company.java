@@ -180,17 +180,26 @@ public class Company extends Thread {
     }
 
     public void OneKmPay(String driverID){
-        System.out.println(driverID);
+        
+        try {
+            this.socket = new Socket("localhost", 33333);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        };
+        
+        //System.out.println(driverID);
         int contaDriv = searchAccount(driverID);
         if (contaDriv == -1){
             System.out.println("Conta inexistente");
         } else  {
-            System.out.println("Entrou no OnePay e a Conta foi encontrada");
-            BotPayment bt = new BotPayment(socket, 0, contaDriv, RUN_PRICE);
+            //System.out.println("Entrou no OnePay e a Conta foi encontrada");
+            BotPayment bt = new BotPayment(this.socket, 0, contaDriv, RUN_PRICE);
             bt.start();
         }        
         
-        // Criar uma BotPaymento - Syncronized -> passar para ele o socket, id do motorista que precisa receber e passar o valor()
+        // Criar uma BotPayment - Syncronized -> passar para ele o socket, id do motorista que precisa receber e passar o valor()
         // Neste momento, fazer o start do BotPaymento
     }
 

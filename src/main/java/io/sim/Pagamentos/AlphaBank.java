@@ -30,18 +30,12 @@ public class AlphaBank extends Thread {
         Account sender = getAccountByID(senderID);
         Account receiver = getAccountByID(receiverID);
 
-        if(sender == null){
-            System.out.println("SENDER");
-        }
-
-        if(receiver == null){
-            System.out.println("RECIEVER");
-        }
-
         //System.out.println("PROBELMA COM FOI SENDER OU RECIEVER");
         
         if (sender != null && receiver != null) {
-            System.out.println("NAO FOI SENDER OU RECIEVER");
+            //System.out.println("NAO FOI SENDER OU RECIEVER");
+            //System.out.println(sender.getBalance());
+            //System.out.println(amount);
             if (sender.getBalance() >= amount) {
                 sender.withdraw(amount);
                 receiver.deposit(amount);

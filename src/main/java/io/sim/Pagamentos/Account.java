@@ -33,6 +33,7 @@ public class Account {
         if (amount > 0) {
             if (balance >= amount) {
                 balance -= amount;
+                //System.out.println(getBalance());
             } else {
                 System.out.println("Saldo insuficiente para efetuar o saque.");
             }
