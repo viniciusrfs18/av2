@@ -68,6 +68,7 @@ public class Account extends Thread {
 
     public void deposito(double valor) {
         synchronized (sincroniza) {
+            System.out.println("CHEGOU DEPOSITO");
             if (valor > 0) {
                 saldo += valor;
             } else {
@@ -78,6 +79,7 @@ public class Account extends Thread {
 
     public void saque(double valor) {
         synchronized (sincroniza) {
+            System.out.println("CHEGOU SAQUE");
             if (valor > 0) {
                 if (saldo >= valor) {
                     saldo -= valor;

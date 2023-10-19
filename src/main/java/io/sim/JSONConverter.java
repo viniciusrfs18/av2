@@ -28,6 +28,7 @@ public class JSONConverter {
         String operacao = transferDataJSONObj.getString("Operacao");
         String recebedor = transferDataJSONObj.getString("ID do Recebedor");
 		double valor = transferDataJSONObj.getDouble("valor");
+        //System.out.println("TESTE TD: " + "/n" + pagador + "/n" + operacao + "/n" + recebedor + "/n" + valor);
         TransferData tf = new TransferData(pagador, operacao, recebedor, valor);
 		return tf;
 	}
@@ -48,7 +49,8 @@ public class JSONConverter {
         transferDataJSON.put("Operacao", transferData.getOperacao());
         transferDataJSON.put("ID do Recebedor", transferData.getRecebedor());
 		transferDataJSON.put("valor", transferData.getvalor());
-		return transferDataJSON.toString();
+		//System.out.println("MONTAGEM DO JSON:  " + transferDataJSON.toString());
+        return transferDataJSON.toString();
 	}
 
     // -> CLIENTE

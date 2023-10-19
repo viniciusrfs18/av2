@@ -98,7 +98,7 @@ public class Car extends Vehicle implements Runnable {
 	@Override
 	public void run() {
 		System.out.println(this.idCar + " iniciando");
-		SetFuelLevel sf = new SetFuelLevel(this, 0.005); //VERIFICAR CONSUMO
+		SetFuelLevel sf = new SetFuelLevel(this, 0.01); //VERIFICAR CONSUMO
 		sf.start();
 
 		try {

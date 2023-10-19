@@ -33,13 +33,16 @@ public class AccountCommunication extends Thread {
                 String[] login = JSONConverter.extraiLogin(entrada.readUTF());
 
                 if (alphaBank.conect(login)) {
+                    //System.out.println(entrada.readUTF());
                     TransferData tf = JSONConverter.extraiTransferData(entrada.readUTF());
+                    
                     System.out.println("Leu as informações de Operacao!!");
                     String operacao = tf.getOperacao();
                     switch (operacao) {
                         case "Pagamento":
                             String recebedorID = tf.getRecebedor();
                             double valor = tf.getvalor();
+                            System.out.println(valor + " " + recebedorID);
                             if (alphaBank.transferencia(login[0], recebedorID, valor)) {
                                 saida.writeUTF(JSONConverter.criaRespostaTransferencia(true));
                                 alphaBank.adicionaRegistros(tf);

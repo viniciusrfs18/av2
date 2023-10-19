@@ -88,7 +88,10 @@ public class AlphaBank extends Thread {
                 if (pagador.getSaldo() >= valor) {
 
                     pagador.saque(valor);
+                    System.out.println("PAGADOR - Saldo pós pagamento: " + pagador.getSaldo()); 
+                    
                     recebedor.deposito(valor);
+                    System.out.println("RECEBEDOR - Saldo pós pagamento: " + recebedor.getSaldo());
                     return true;
                 
                 } else {
@@ -150,7 +153,7 @@ public class AlphaBank extends Thread {
                         return registrosPendentes.remove(i);
                     }
                 }
-                System.out.println("Não há registros para esa conta");
+                System.out.println("Não há registros para essa conta");
             }
             return null;
         }

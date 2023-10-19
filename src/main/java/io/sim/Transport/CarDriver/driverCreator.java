@@ -24,8 +24,8 @@ public class driverCreator {
 
         for (int i = 0; i < qtdDrivers; i++) {
             
-            String driverID = "Driver " + (i + 1);
-            String carID = "Car " + (i + 1);
+            String driverID = "Driver" + (i + 1);
+            String carID = "Car" + (i + 1);
 
             Car car = new Car(on_off, carID, cor, driverID, sumo, taxaAquisicao, fuelType, fuelPreferential, fuelPrice, personCapacity, personNumber, host, portaCompanny);
             
