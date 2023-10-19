@@ -5,69 +5,52 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+import io.sim.JSONConverter;
+
 public class BotPayment extends Thread {
     private Socket socket;
-    private double valor;
-    private int contaPag;
-    private int contaRec;
+    private String pagadorID;
+    private String pagadorSenha;
+    private String recebedorID;
+    private double quantia;
 
-    public BotPayment(Socket s, int contaPag, int contaRec, double valor) {
-        this.socket = s;
-        this.valor = valor;
-        this.contaPag = contaPag;
-        this.contaRec = contaRec;
+    public BotPayment(Socket _socket, String _pagadorID, String _pagadorSenha, String _recebedorID, double _quantia) {
+        this.socket = _socket;
+        this.pagadorID = _pagadorID;
+        this.pagadorSenha = _pagadorSenha;
+        this.recebedorID = _recebedorID;
+        this.quantia = _quantia;
     }
 
     @Override
     public void run() {
         try {
             // Crie streams de entrada e saída para comunicar com o servidor AlphaBank
-            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
-            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+            DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+            DataInputStream input = new DataInputStream(socket.getInputStream());
 
-            // Construa a solicitação em formato JSON
-            String jsonRequest = buildJsonRequest(contaPag, contaRec, valor);
+            String[] login = { pagadorID, pagadorSenha };
 
-            // Envie a solicitação ao servidor AlphaBank
-            outputStream.writeUTF(jsonRequest);
-            //outputStream.flush();
+            output.writeUTF(JSONConverter.criarJSONLogin(login));
+
+            TransferData td = new TransferData(recebedorID, "Pagamento", pagadorID, quantia);
+
+            output.writeUTF(JSONConverter.criaJSONTransferData(td));
 
             // Aguarde a resposta do servidor AlphaBank
-           
-            //String jsonResponse = inputStream.readUTF();
-            //System.out.println(jsonResponse);
-            
-            /**
-            // Analise a resposta em formato JSON
-            boolean success = parseJsonResponse(jsonResponse);
+            String resposta = input.readUTF();
+            boolean sucesso = JSONConverter.extraiResposta(resposta);
 
-             
-            if (success) {
+            if (sucesso) {
                 System.out.println("Transferência bem-sucedida!");
             } else {
-                System.out.println("Transferência falhou. Verifique o saldo ou a existência das contas.");
-            }*/
-            
-
-            // Feche a conexão
-            socket.close();
+                System.out.println("Transferência falhou.");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    // Construa a solicitação em formato JSON
-    private String buildJsonRequest(int contaPag, int contaRec, double valor) {
-        // Aqui você pode usar uma biblioteca JSON, como Jackson ou Gson, para construir a solicitação JSON.
-        // Neste exemplo, construiremos manualmente uma string JSON simples.
-        return "{\"command\":\"TRANSFER\",\"senderID\":" + contaPag + ",\"receiverID\":" + contaRec + ",\"amount\":" + valor + "}";
-    }
-
-    // Analise a resposta em formato JSON
-    private boolean parseJsonResponse(String jsonResponse) {
-        // Aqui você pode usar uma biblioteca JSON, como Jackson ou Gson, para analisar a resposta JSON.
-        // Neste exemplo, analisaremos manualmente a string JSON.
-        return jsonResponse.equals("true");
-    }
 }
+
 

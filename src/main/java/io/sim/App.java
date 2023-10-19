@@ -1,16 +1,16 @@
 package io.sim;
 
+import io.sim.Simulador.EnvSimulator;
+
 /**
- * Classe Princiapl com o metodo main
+ * Hello world!
+ *
  */
-public class App
-{
-   public static void main( String[] args ) throws InterruptedException
-   {
-        System.out.println("Inicia o simulador");
+public class App {
+    public static void main( String[] args ) {
+
         EnvSimulator ev = new EnvSimulator();
         ev.start();
-        ev.join();
-        System.exit(0);
+
     }
 }
