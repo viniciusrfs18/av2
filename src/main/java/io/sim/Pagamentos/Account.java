@@ -57,28 +57,30 @@ public class Account extends Thread {
     }
 
     public double getSaldo() {
-        return saldo;
+        synchronized (sincroniza) {
+            return saldo;
+        }
     }
 
     public void setBalance(double _saldo) {
         this.saldo = _saldo;
     }
 
-    public void deposito(double quantia) {
+    public void deposito(double valor) {
         synchronized (sincroniza) {
-            if (quantia > 0) {
-                saldo += quantia;
+            if (valor > 0) {
+                saldo += valor;
             } else {
                 System.out.println("O valor do depósito deve ser positivo.");
             }
         }
     }
 
-    public void saque(double quantia) {
+    public void saque(double valor) {
         synchronized (sincroniza) {
-            if (quantia > 0) {
-                if (saldo >= quantia) {
-                    saldo -= quantia;
+            if (valor > 0) {
+                if (saldo >= valor) {
+                    saldo -= valor;
                 } else {
                     System.out.println("Saldo insuficiente para efetuar o saque.");
                 }
@@ -100,22 +102,6 @@ public class Account extends Thread {
         return senha.toString();
     }
 
-    /** 
-    public static Account criaAccount(String accountID, long saldo) {
-        //Gerando uma senha de 6 digitos aleatória
-        String numerosPermitidos = "0123456789";
-        Random random = new Random();
-        StringBuilder sb = new StringBuilder(6);
-        for (int i = 0; i < 6; i++) {
-            int index = random.nextInt(numerosPermitidos.length());
-            char randomNumber = numerosPermitidos.charAt(index);
-            sb.append(randomNumber);
-        }
-        String senha = sb.toString();
-
-        Account account = new Account(accountID, senha, saldo);
-        return account;
-    }*/
 }
 
 

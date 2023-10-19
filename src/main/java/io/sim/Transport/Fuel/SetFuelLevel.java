@@ -2,11 +2,12 @@ package io.sim.Transport.Fuel;
 
 import io.sim.Transport.CarDriver.Car;
 
-public class AtualizaTanque extends Thread {
+// Classe responsável por realizar o gasto de combustível dos carros a cada 1segundo
+public class SetFuelLevel extends Thread {
     Car car;
     double litros;
 
-    public AtualizaTanque(Car _car, double _litros) {
+    public SetFuelLevel(Car _car, double _litros) {
         this.car = _car;
         this.litros = _litros;
     }
@@ -14,30 +15,30 @@ public class AtualizaTanque extends Thread {
     @Override
     public void run() {
         try {
-            boolean soNoInicio = true;
+            boolean toStart = true;
             while (!car.getFinalizado()) {
-                // System.out.println("TRAVOU AQUI");
-                if (soNoInicio) {
+                
+                if (toStart) {
                     Thread.sleep(200);
-                    soNoInicio = false;
+                    toStart = false;
                 }
 
                 while (car.isOn_off()) {
-                    System.out.println("Velocidade do carro: " + car.getSpeed());
-                    if (car.getSpeed() != 0) {
+                    if (car.getSpeed() > 0) { // Apenas gasta combustível se o carro não estiver parado.
                         car.gastaCombustivel(litros);
                     }
                     Thread.sleep(1000);
                 }
 
                 if (!car.isOn_off()) {
-                    soNoInicio = true;
+                    toStart = true;
                 }
-                //System.out.println("Não executou o While");
+
             }
-            System.out.println("Finalizando Atualiza Fuel Tank");
+
+            System.out.println("Finalizando SetFuelLevel");
+            
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

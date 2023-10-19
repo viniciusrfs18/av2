@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Random;
 
 import it.polito.appeal.traci.SumoTraciConnection;
 import de.tudresden.sumo.objects.SumoColor;
@@ -14,7 +15,7 @@ import de.tudresden.sumo.objects.SumoStringList;
 import io.sim.JSONConverter;
 import io.sim.MobilityCompany.Company;
 import io.sim.Transport.TransportService;
-import io.sim.Transport.Fuel.AtualizaTanque;
+import io.sim.Transport.Fuel.SetFuelLevel;
 import io.sim.Transport.Rotas.Rota;
 
 /**Define os atributos que coracterizam um Carro.
@@ -44,7 +45,6 @@ public class Car extends Vehicle implements Runnable {
 	private double speed; //NEWF
 	private Rota rota;
 	private double fuelTank;
-	private double maxFuelCapacity;
 	private String carStatus;
 	private double latInicial;
 	private double lonInicial;
@@ -85,8 +85,7 @@ public class Car extends Vehicle implements Runnable {
 		this.personNumber = _personNumber;
 		this.speed = 100;
 		this.rota = null;
-		this.fuelTank = 10000;
-		this.maxFuelCapacity = 55000;
+		this.fuelTank = 10;
 		this.carStatus = "aguardando";
 		this.drivingRepport = new ArrayList<DrivingData>();
 		
@@ -99,8 +98,8 @@ public class Car extends Vehicle implements Runnable {
 	@Override
 	public void run() {
 		System.out.println(this.idCar + " iniciando");
-		AtualizaTanque at = new AtualizaTanque(this, 100);
-		at.start();
+		SetFuelLevel sf = new SetFuelLevel(this, 0.005); //VERIFICAR CONSUMO
+		sf.start();
 
 		try {
             socket = new Socket(this.companyServerHost, this.companyServerPort);
@@ -130,7 +129,7 @@ public class Car extends Vehicle implements Runnable {
 			
 				String edgeFinal = this.getEdgeFinal(); 
 				this.on_off = true;
-				while(!Company.estaNoSUMO(this.idCar, this.sumo)) {
+				while(!Company.stillOnSUMO(this.idCar, this.sumo)) {
 					Thread.sleep(this.acquisitionRate);
 				}
 				String edgeAtual = (String) this.sumo.do_job_get(Vehicle.getRoadID(this.idCar));
@@ -163,6 +162,7 @@ public class Car extends Vehicle implements Runnable {
 						latAtual = coordGeo[0];
 						lonAtual = coordGeo[1];
 						atualizaSensores();
+
 						if (carStatus != "abastecendo") {
 							this.carStatus = "rodando";
 						}
@@ -176,6 +176,7 @@ public class Car extends Vehicle implements Runnable {
 							edgeAtual = (String) this.sumo.do_job_get(Vehicle.getRoadID(this.idCar));
 						}
 					}
+
 				}
 				System.out.println(this.idCar + " off.");
 
@@ -389,12 +390,8 @@ public class Car extends Vehicle implements Runnable {
 		return this.fuelTank;
 	}
 
-	public double getCapacidadeDoTanque() {
-		return this.maxFuelCapacity;
-	}
-
-	public void abastecido() throws Exception{
-		fuelTank = maxFuelCapacity;
+	public void abastecido(double litros) throws Exception{
+		this.fuelTank += litros;
 		carStatus = "rodando";
 		voltarAndar();
 	}
@@ -424,8 +421,16 @@ public class Car extends Vehicle implements Runnable {
 	}
 
 	public void voltarAndar() throws Exception {
-		this.sumo.do_job_set(Vehicle.setSpeed(this.idCar, speed));
-		this.sumo.do_job_set(Vehicle.setSpeedMode(this.idCar, 31));
+		this.sumo.do_job_set(Vehicle.setSpeed(this.idCar, setRandomSpeed()));
+		//this.sumo.do_job_set(Vehicle.setSpeedMode(this.idCar, 31));
+	}
+
+	public double setRandomSpeed(){
+		Random random = new Random();
+        double range = 9.5 - 2.5;
+        double scaled = random.nextDouble() * range;
+        double generatedNumber = scaled + 2.5;
+        return generatedNumber;
 	}
 
 	public double getSpeed() throws Exception{
@@ -434,10 +439,10 @@ public class Car extends Vehicle implements Runnable {
 
 	public void pararCarro() throws Exception{
 		this.sumo.do_job_set(Vehicle.setSpeedMode(this.idCar, 0));
-		sumo.do_job_set(Vehicle.setSpeed(this.idCar, 0));
+		this.sumo.do_job_set(Vehicle.setSpeed(this.idCar, 0));
 	}
 
-	public void preparaAbastecimento() throws Exception{
+	public void stopToFuel() throws Exception{
 		carStatus = "abastecendo";
 		pararCarro();
 	}

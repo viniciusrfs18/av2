@@ -21,7 +21,7 @@ public class Company extends Thread {
     // Atributos para sincronização
     private static Object sincroniza;
     private static boolean rotasDisponiveis;
-    private boolean canectandoCars;
+    private boolean conectandoCars;
 
     // Atributos da classe
     private ArrayList<Rota> rotasDisp;
@@ -46,7 +46,7 @@ public class Company extends Thread {
         // Inicializa atributos de sincronização
         sincroniza = new Object();
         rotasDisponiveis = true;
-        this.canectandoCars = true;
+        this.conectandoCars = true;
 
         // Atributos da classe
         this.rotasDisp = rotas;
@@ -72,14 +72,14 @@ public class Company extends Thread {
 			saida = new DataOutputStream(socket.getOutputStream());
             
             this.account = new Account("Company", 100000);
-            AlphaBank.adicionarAccount(account);
+            AlphaBank.addAccount(account);
             account.start();
             
             System.out.println("Company se conectou ao Servido do AlphaBank!!");
 
             while (rotasDisponiveis) {
-                // Pequeno delay para evitar problemas
-                if(!canectandoCars) {
+                
+                if(!conectandoCars) {
                     try {
                         sleep(500);
                     } catch (InterruptedException e) {
@@ -94,7 +94,7 @@ public class Company extends Thread {
                 }
 
                 // Talvez passar essa função pra outra classe
-                if(canectandoCars) {
+                if(conectandoCars) {
                     for(int i = 0; i < numDrivers; i++) {
                         // conecta os clientes -> IMP mudar para ser feito paralelamente (ou n)
                         System.out.println("Company - Esperando para conectar " + (i + 1));
@@ -102,11 +102,11 @@ public class Company extends Thread {
                         System.out.println("Car conectado");
 
                         // Cria uma thread para comunicacao de cada Car
-                        CarManipulator carManipulator = new CarManipulator(socket, this);
-                        carManipulator.start();
+                        CarRepport cr = new CarRepport(socket, this);
+                        cr.start();
                     }
                     System.out.println("Company: Todos os drivers criados");
-                    canectandoCars = false;
+                    conectandoCars = false;
                 }
 
                 System.out.println(account.getAccountID() + " tem R$" + account.getSaldo() + " de saldo");
@@ -118,18 +118,20 @@ public class Company extends Thread {
         System.out.println("Encerrando a Company...");
     }
 
-    public static boolean temRotasDisponiveis() {
+    // Método responsável por retornar a informação
+    public static boolean routesAvaliable() {
         return rotasDisponiveis;
     }
 
-    public static boolean estaNoSUMO(String _idCar, SumoTraciConnection _sumo) {
+    // Método responsável por verificar se o carro passado ainda existe no SUMO, ele deve existir pois o simulador estava apresentando problemas 
+    // para mudar as rotas dos veículos uma vez que a Thread de algum deles deixa de existir.
+    public static boolean stillOnSUMO(String _idCar, SumoTraciConnection _sumo) {
         synchronized(sincroniza){
             try {
                 SumoStringList lista;
                 lista = (SumoStringList) _sumo.do_job_get(Vehicle.getIDList());
                 return lista.contains(_idCar);
             } catch (Exception e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
                 return false;
             }
@@ -145,6 +147,7 @@ public class Company extends Thread {
         }
     }
 
+    // Método responsável por adicionar a rota terminada ao ArrayList de Rotas Finalizadas
     public void terminarRota(String _routeID) {
         synchronized (sincroniza) {
             System.out.println("Arquivando rota: " + _routeID);
@@ -156,8 +159,9 @@ public class Company extends Thread {
         }
     }
 
-    public void fazerPagamento(String driverID) throws IOException {
-        BotPayment bt = new BotPayment(socket, account.getAccountID(),  account.getSenha(), driverID, preco);
+    // Método responsável por criar o BotPayment que realizará o pagamento por 1Km percorrido ao motorista.
+    public void oneKmPay(String driverID) throws IOException {
+        BotPayment bt = new BotPayment(socket, "Company",  account.getSenha(), driverID, preco);
         bt.start();
     }
 }

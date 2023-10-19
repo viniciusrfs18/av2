@@ -34,76 +34,63 @@ public class FuelStation extends Thread {
 
     @Override
     public void run() {
+
         try {
-            System.out.println("Fuel Station iniciando...");
-
-            socket = new Socket(this.alphaBankServerHost, this.alphaBankServerPort);
-            entrada = new DataInputStream(socket.getInputStream());
-            saida = new DataOutputStream(socket.getOutputStream());
-
-            this.account = new Account("Fuel Station", 0);
             
-            AlphaBank.adicionarAccount(account);
-            account.start();
+            System.out.println("Fuel Station iniciando..."); // Mensagem para verificar que a FuelStation iniciou
+
+            socket = new Socket(this.alphaBankServerHost, this.alphaBankServerPort); // cria um socket 
+            entrada = new DataInputStream(socket.getInputStream()); // inicia um canal para receber a entrada de dados
+            saida = new DataOutputStream(socket.getOutputStream()); // inicia um canal para receber a saída de dados
+
+            this.account = new Account("FuelStation", 0); // cria a conta bancária para o FuelStation com o saldo zerado
             
-            System.out.println("Fuel Station se conectou ao Servido do AlphaBank!!");
+            AlphaBank.addAccount(account); // Por meio do método estático da classe AlphaBank a conta criada para a FuelStation é adicionada ao array de contas do AlphaBank
+            account.start(); // Inicia a Thread da conta criada para a FuelStation
 
             while (true) {
-                
+                //NADA NADA NADA    
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
         System.out.println("Encerrando a Fuel Station...");
     }
 
-    public String getFSAccountID() {
+    // Método que retorna a ID da conta da fuelstation
+    public String getFSAccountID() { 
         return this.account.getAccountID();
     }
 
-    public double getPrecoLitro() {
+    // Método que retorna o Preço do Litro de Gasolina
+    public double getPreco() { 
         return this.preco;
     }
 
-    public double[] decideQtdLitros(double litros, double saldoDisp) {
-        double precoTotal = litros * preco;
 
-        if (saldoDisp > precoTotal) {
-            double[] info = new double[] { precoTotal, litros*1000 };
-            return info;
-        } else {
-            double precoReduzindo = precoTotal;
-            while (saldoDisp < precoReduzindo) {
-                litros--;
-                precoReduzindo = litros*preco;
-                
-                if (litros <= 0) {
-                    double[] info = new double[] { 0, 0 };
-                    return info;
-                }
-            }
-            double[] info = new double[] { precoReduzindo, litros*1000 };
-            return info;
-        }
-    }
-
-    public void abastecerCarro(Car car, double litros) {
+    // Método responsável por representar o abastecimento do objeto carro
+    public void fuelCar(Car car, double litros) {
+       
         try {
-            boolean jaAbasteceu = false;
-            while (!jaAbasteceu) {
-                if (car.getSpeed() == 0) {
-                    bombas.acquire(); // Tenta adquirir uma bomba de combustível
-                    System.out.println(car.getIdCar() + " está abastecendo no Posto de Gasolina");
-                    Thread.sleep(30000); // Tempo de abastecimento de 2 minutos (120000 em milissegundos)
-                    car.abastecido();
-                    System.out.println(car.getIdCar() + " terminou de abastecer");
-                    bombas.release(); // Libera a bomba de combustível
-                    jaAbasteceu = true;
-                }
-            }
+           
+            bombas.acquire(); // Tenta adquirir uma bomba de combustível
+           
+            System.out.println(car.getIdCar() + " está abastecendo no Posto de Gasolina");
+                    
+            Thread.sleep(120000); // Tempo de abastecimento de 2 minutos (120000 em milissegundos)
+            
+            car.abastecido(litros); // Chama o método da classe carro responsável por colocar a quantidade possível de gasolina no tanque do objeto e fazer o carro voltar a andar.
+            
+            System.out.println(car.getIdCar() + " terminou de abastecer");
+                    
+            bombas.release(); // Libera a bomba de combustível
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+    
     }
 
 }
