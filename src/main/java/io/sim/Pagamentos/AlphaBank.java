@@ -1,137 +1,132 @@
 package io.sim.Pagamentos;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
-import java.io.*;
-import java.net.*;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AlphaBank extends Thread {
-    private ArrayList<Account> accounts;
-    private ServerSocket serverSocket;
-    private ObjectMapper objectMapper; // Usaremos a biblioteca Jackson para lidar com JSON
+    
+    private ServerSocket serverAlphaBank; //Socket do Servidor (AlphaBank)
+    private static ArrayList<Account> accounts; //ArrayList com todas as contas criadas
+    private static ArrayList<TransferData> registrosPendentes; 
+    static int qtdClientes = 0;
+
+    // Atributo de sincronização
+    private Object sincroniza;
 
     public AlphaBank(ServerSocket serverSocket) throws IOException {
-        this.accounts = new ArrayList<>();
-        this.serverSocket = serverSocket;
-        this.objectMapper = new ObjectMapper();
-    }
-
-    public boolean hasAccount(int identifier) {
-        for (Account account : accounts) {
-            if (account.getIdentifier() == identifier) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean transfer(int senderID, int receiverID, double amount) {
-        Account sender = getAccountByID(senderID);
-        Account receiver = getAccountByID(receiverID);
-
-        //System.out.println("PROBELMA COM FOI SENDER OU RECIEVER");
-        
-        if (sender != null && receiver != null) {
-            //System.out.println("NAO FOI SENDER OU RECIEVER");
-            //System.out.println(sender.getBalance());
-            //System.out.println(amount);
-            if (sender.getBalance() >= amount) {
-                sender.withdraw(amount);
-                receiver.deposit(amount);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private Account getAccountByID(int identifier) {
-        for (Account account : accounts) {
-            if (account.getIdentifier() == identifier) {
-                return account;
-            }
-        }
-        return null;
+        this.serverAlphaBank = serverSocket;
+        accounts = new ArrayList<Account>();
+        registrosPendentes = new ArrayList<TransferData>();
+        this.sincroniza = new Object();
     }
 
     @Override
     public void run() {
         try {
             System.out.println("AlphaBank iniciado. Aguardando conexões...");
-
+            
             while (true) {
-                Socket clientSocket = serverSocket.accept();
+
+                Socket clientSocket = serverAlphaBank.accept();
                 System.out.println("Cliente conectado: " + clientSocket.getInetAddress());
 
-                Thread clientThread = new Thread(() -> {
-                    try (DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
-                         DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream())) {
-
-                        String jsonRequest = inputStream.readUTF();
-                        Request request = objectMapper.readValue(jsonRequest, Request.class);
-
-                        if (request.getCommand().equals("TRANSFER")) {
-                            int senderID = request.getSenderID();
-                            int receiverID = request.getReceiverID();
-                            double amount = request.getAmount();
-                            
-                            boolean success = transfer(senderID, receiverID, amount);
-                            Response response = new Response(success);
-                            String jsonResponse = objectMapper.writeValueAsString(response);
-
-                            outputStream.writeUTF(jsonResponse);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-
-                clientThread.start();
+                AccountManipulator accountManipulator = new AccountManipulator(clientSocket, this);
+                accountManipulator.start();
+            
             }
+            //System.out.println("Encerrando AlphaBank");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void setAccount(ArrayList<Account> accounts){
-        this.accounts = accounts;
-    }
-    // Resto do código permanece inalterado
-
-    public static class Request {
-        private String command;
-        private int senderID;
-        private int receiverID;
-        private double amount;
-
-        public String getCommand(){
-            return command;
+    public static void adicionarAccount(Account conta) {
+        synchronized (AlphaBank.class) {
+            if (accounts != null) {
+                accounts.add(conta);
+            } else {
+                System.out.println("Adicao de conta mal sucedida: AlphaBank não foi iniciado ainda");
+            }
         }
-
-        public int getSenderID(){
-            return senderID;
-        }
-
-        public int getReceiverID(){
-            return receiverID;
-        }
-
-        public double getAmount(){
-            return amount;
-        }
-
     }
 
-    public static class Response {
-        private boolean success;
+    public boolean fazerLogin(String[] login) {
+        String accountID = login[0];
+        String senha = login[1];
 
-        public Response(boolean success){
-            this.success = success;
+        for (Account account : accounts) {
+            if (account.getAccountID().equals(accountID)) {
+                if (account.getSenha().equals(senha)) {
+                    return true;
+                }
+            }
         }
+        return false;
+    }
 
-        public boolean getSuccess(){
-            return success;
+    public boolean transferencia(String pagadorID, String recebedorID, double quantia) {
+        Account pagador = getAccountPeloID(pagadorID);
+        Account recebedor = getAccountPeloID(recebedorID);
+        
+        synchronized (sincroniza) {
+            if (pagador != null && recebedor != null) {
+                if (pagador.getSaldo() >= quantia) {
+                    pagador.saque(quantia);
+                    recebedor.deposito(quantia);
+                    return true;
+                } else {
+                    System.out.println("AB - Problemas de transferencia: " + pagador + " nao tem saldo suficiente");
+                }
+            } else {
+                System.out.println("AB - Problemas de transferencia: ID do recebedor");
+            }
+            return false;
+        }
+    }
+
+    private static Account getAccountPeloID(String accountID) {
+        for (Account account : accounts) {
+            if (account.getAccountID().equals(accountID)) {
+                return account;
+            }
+        }
+        return null;
+    }
+
+    public void adicionaRegistros(TransferData registerPag) {
+        registerPag.setTimestamp();
+        registerPag.setAccountID(registerPag.getPagador());
+        registrosPendentes.add(registerPag);
+        TransferData registerReceb = new TransferData(registerPag.getPagador(), "Recebimento", registerPag.getRecebedor(), registerPag.getQuantia());
+        registerReceb.setTimestamp();
+        registerReceb.setAccountID(registerPag.getRecebedor());
+        registrosPendentes.add(registerReceb);
+    }
+
+    public static int numeroDeRegistrosPend() {
+        synchronized (AlphaBank.class) {
+            if (registrosPendentes != null) {
+                return registrosPendentes.size();
+            }
+            return 0;
+        }
+    }
+
+    public static TransferData pegarRegistro(String accountID) {
+        synchronized (AlphaBank.class) {
+            if (registrosPendentes != null) {
+                for (int i = 0; i < registrosPendentes.size(); i++) {
+                    if (accountID.equals(registrosPendentes.get(i).getAccountID())) {
+                        return registrosPendentes.remove(i);
+                    }
+                }
+                System.out.println("Não há registros para esa conta");
+            }
+            return null;
         }
     }
 }
+
 

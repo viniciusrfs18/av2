@@ -1,206 +1,163 @@
 package io.sim.MobilityCompany;
 
-
-import java.io.ObjectInputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-
-import io.sim.Driver;
+import it.polito.appeal.traci.SumoTraciConnection;
+import de.tudresden.sumo.cmd.Vehicle;
+import de.tudresden.sumo.objects.SumoStringList;
 import io.sim.Pagamentos.Account;
+import io.sim.Pagamentos.AlphaBank;
 import io.sim.Pagamentos.BotPayment;
-import io.sim.Rotas.Rotas;
+import io.sim.Transport.Rotas.Rota;
 
 public class Company extends Thread {
-    // atributos de servidor
+    // Atributos de Servidor
     private ServerSocket serverSocket;
-    
-    // atributos de sincronizacao
-    private Object oWatch = new Object();
-    private static boolean liberado = true;
-    
-    // cliente AlphaBank
-    private Socket socket;
 
-    // atributos da classe
-    private static ArrayList<Rotas> routesToExe = new ArrayList<Rotas>();
-    private static ArrayList<Rotas> routesInExe = new ArrayList<Rotas>();
-    private static ArrayList<Rotas> routesExecuted = new ArrayList<Rotas>();
-    private ArrayList<Driver> drivers = new ArrayList<Driver>();
+    // Atributos para sincronização
+    private static Object sincroniza;
+    private static boolean rotasDisponiveis;
+    private boolean canectandoCars;
 
-    // private static Account account;
-    private static final double RUN_PRICE = 3.25;
+    // Atributos da classe
+    private ArrayList<Rota> rotasDisp;
+    private ArrayList<Rota> rotasEmExec;
+    private ArrayList<Rota> rotasTerminadas;
+    private static double preco;
     private static int numDrivers;
-    private static boolean routesAvailable = true;
-    private static boolean allDriversCreated = false;
-    
+
+    // Atributos como cliente de AlphaBank
+    private Socket socket;
     private Account account;
-
-    public Company(ServerSocket serverSocket, ArrayList<Rotas> routes, int _numDrivers)
-    {
-        // BotPayment payment = new BotPayment(RUN_PRICE);
-        // Adicionar as rotas em routesToExe a partir de um arquivo
+    private int alphaBankServerPort;
+    private String alphaBankServerHost; 
+    private DataInputStream entrada;
+    private DataOutputStream saida;
+    
+    public Company(ServerSocket serverSocket, ArrayList<Rota> rotas, int _numDrivers, int _alphaBankServerPort, String _alphaBankServerHost) {
+        
+        // Inicializa servidor
         this.serverSocket = serverSocket;
-        numDrivers = _numDrivers;
-        routesToExe = routes;
-        this.account = new Account(0, 10000);
 
-        try {
-            this.socket = new Socket("localhost", 33333);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        };
+        // Inicializa atributos de sincronização
+        sincroniza = new Object();
+        rotasDisponiveis = true;
+        this.canectandoCars = true;
+
+        // Atributos da classe
+        this.rotasDisp = rotas;
+		System.out.println("Rotas: "+ rotasDisp.size()+" rotas disponiveis");
+        rotasEmExec = new ArrayList<Rota>();
+        rotasTerminadas = new ArrayList<Rota>();
+        preco = 3.25;
+        numDrivers = _numDrivers;
+
+        // Atributos como cliente de AlphaBank
+        alphaBankServerPort = _alphaBankServerPort;
+        alphaBankServerHost = _alphaBankServerHost;
+
     }
 
     @Override
-    public void run()
-    {
-        try
-        {
-            System.out.println("MobilityCompany iniciada...");
+    public void run() {
+        try {
+            System.out.println("Company iniciando...");
 
-            while (routesAvailable) // IMP tentar trocar para 
-            {
+            socket = new Socket(this.alphaBankServerHost, this.alphaBankServerPort);
+            entrada = new DataInputStream(socket.getInputStream());
+			saida = new DataOutputStream(socket.getOutputStream());
+            
+            this.account = new Account("Company", 100000);
+            AlphaBank.adicionarAccount(account);
+            account.start();
+            
+            System.out.println("Company se conectou ao Servido do AlphaBank!!");
 
-                if(allDriversCreated)
-                {
+            while (rotasDisponiveis) {
+                // Pequeno delay para evitar problemas
+                if(!canectandoCars) {
                     try {
                         sleep(500);
                     } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                 }
-                
-                if(routesToExe.size() == 0 && routesInExe.size() == 0){
 
+                // Verifica se ainda tem roas disponíveis
+                if(rotasDisp.size() == 0 && rotasEmExec.size() == 0) {
                     System.out.println("Rotas terminadas");
-                    routesAvailable = false;
-                
+                    rotasDisponiveis = false;
                 }
-                
-                if(!allDriversCreated){
-                    for(int i=0; i<numDrivers;i++) { // conecta os clientes -> IMP mudar para ser feito paralelamente (ou n)
-                        
-                        System.out.println("MC - Aguardando conexao" + (i+1));
+
+                // Talvez passar essa função pra outra classe
+                if(canectandoCars) {
+                    for(int i = 0; i < numDrivers; i++) {
+                        // conecta os clientes -> IMP mudar para ser feito paralelamente (ou n)
+                        System.out.println("Company - Esperando para conectar " + (i + 1));
                         Socket socket = serverSocket.accept();
                         System.out.println("Car conectado");
 
-                        Thread mc = new CommunicationThread(socket, oWatch, this);
-                        mc.start();
-                        if(i == (numDrivers - 1)){
-                            System.out.println("MC - Todos os drivers criados.");
-                        }
+                        // Cria uma thread para comunicacao de cada Car
+                        CarManipulator carManipulator = new CarManipulator(socket, this);
+                        carManipulator.start();
                     }
-                    allDriversCreated = true;
+                    System.out.println("Company: Todos os drivers criados");
+                    canectandoCars = false;
                 }
+
+                System.out.println(account.getAccountID() + " tem R$" + account.getSaldo() + " de saldo");
             }
         }
-        catch (IOException e)
-        {
+        catch (IOException e) {
             e.printStackTrace();
         }
-
-        System.out.println("MobilityCompany encerrada...");
+        System.out.println("Encerrando a Company...");
     }
-    
 
-    /**Libera uma rota para o cliente que a solicitou. Para isso, remove de routesToExe e adiciona em routesInExe
-     * @return route Route - Rota do topo da ArrayList de rotas
-     */
-    public Rotas liberarRota(){
-        synchronized (oWatch)
-        {
-            Rotas route = routesToExe.remove(0);
-            routesInExe.add(route); // mudar para routesInExe.add(car.getID(),route) ou route.getID()
-            return route;
+    public static boolean temRotasDisponiveis() {
+        return rotasDisponiveis;
+    }
+
+    public static boolean estaNoSUMO(String _idCar, SumoTraciConnection _sumo) {
+        synchronized(sincroniza){
+            try {
+                SumoStringList lista;
+                lista = (SumoStringList) _sumo.do_job_get(Vehicle.getIDList());
+                return lista.contains(_idCar);
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                return false;
+            }
+        }
+	}
+
+    // Libera uma rota para o cliente que a solicitou. Para isso, remove de "rotasDisp" e adiciona em "rotasEmExec"
+    public Rota executarRota() {
+        synchronized (sincroniza) {
+            Rota rota = rotasDisp.remove(0);
+            rotasEmExec.add(rota);
+            return rota;
         }
     }
 
-    public void arquivarRota(String _routeID){
-        synchronized (oWatch)
-        {
+    public void terminarRota(String _routeID) {
+        synchronized (sincroniza) {
             System.out.println("Arquivando rota: " + _routeID);
-            for(int i=0;i<routesInExe.size();i++)
-            {
-                if(routesInExe.get(i).getRouteID().equals(_routeID))
-                {
-                    routesExecuted.add(routesInExe.remove(i));
-                    break;
-                }
+            int i = 0;
+            while (!rotasEmExec.get(i).getID().equals(_routeID)) {
+                i++;
             }
+            rotasTerminadas.add(rotasEmExec.remove(i));
         }
     }
 
-    public static boolean areRoutesAvailable() {
-        return routesAvailable;
+    public void fazerPagamento(String driverID) throws IOException {
+        BotPayment bt = new BotPayment(socket, account.getAccountID(),  account.getSenha(), driverID, preco);
+        bt.start();
     }
-
-    public String RoutetoString(Rotas _route){
-        String convert;
-        convert = _route.getRouteID() + "," + _route.getEdges();
-        return convert;
-    }
-
-    public int routesToExeSize(){
-        return routesToExe.size();
-    }
-    
-    public int routesInExeSize(){
-        return routesInExe.size();
-    }
-
-    public int routesExecutedSize(){
-        return routesExecuted.size();
-    }
-
-    public Account getAccount(){
-        return this.account;
-    }
-    
-    public void setDrivers(ArrayList<Driver> drivers){
-        this.drivers = drivers;
-    }
-
-
-    public int searchAccount(String driverID){
-        int a = -1;
-        for (int i=0; i<numDrivers; i++){
-            if(drivers.get(i).getDriverId().equals(driverID)){
-                a = drivers.get(i).getAccount().getIdentifier();
-                return a;
-            }
-        }
-        return a;
-    }
-
-    public void OneKmPay(String driverID){
-        
-        try {
-            this.socket = new Socket("localhost", 33333);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        };
-        
-        //System.out.println(driverID);
-        int contaDriv = searchAccount(driverID);
-        if (contaDriv == -1){
-            System.out.println("Conta inexistente");
-        } else  {
-            //System.out.println("Entrou no OnePay e a Conta foi encontrada");
-            BotPayment bt = new BotPayment(this.socket, 0, contaDriv, RUN_PRICE);
-            bt.start();
-        }        
-        
-        // Criar uma BotPayment - Syncronized -> passar para ele o socket, id do motorista que precisa receber e passar o valor()
-        // Neste momento, fazer o start do BotPaymento
-    }
-
 }
