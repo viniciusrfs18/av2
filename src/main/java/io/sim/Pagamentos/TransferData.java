@@ -22,23 +22,23 @@ public class TransferData {
     }
 
     public String getAccountID() {
-        return accountID;
+        return this.accountID;
     }
 
     public String getPagador() {
-        return pagador;
+        return this.pagador;
     }
 
     public String getOperacao() {
-        return operacao;
+        return this.operacao;
     }
 
     public String getRecebedor() {
-        return recebedor;
+        return this.recebedor;
     }
 
     public double getvalor() {
-        return valor;
+        return this.valor;
     }
 
     public void setTimestamp() {

@@ -33,7 +33,8 @@ public class BotPayment extends Thread {
 
             output.writeUTF(JSONConverter.criarJSONLogin(login));
 
-            TransferData td = new TransferData(recebedorID, "Pagamento", pagadorID, valor);
+            TransferData td = new TransferData(pagadorID, "Pagamento", recebedorID, valor);
+            //System.out.println("!!!!!!!!!! - BP: " + recebedorID + " " + pagadorID);
 
             output.writeUTF(JSONConverter.criaJSONTransferData(td));
 

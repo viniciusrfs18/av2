@@ -52,7 +52,7 @@ public class CarRepport extends Thread {
 
                 double distancia = calculaDistancia(latInicial, lonInicial, latAtual, lonAtual);
 
-                System.out.println(comunicacao.getCarID() + " percorreu " + distancia + " metros");
+                //System.out.println(comunicacao.getCarID() + " percorreu " + distancia + " metros");
 		        
                 if (distancia > (distanciaPercorrida + 1000)) {
 			        distanciaPercorrida += 1000;
