@@ -12,14 +12,14 @@ public class BotPayment extends Thread {
     private String pagadorID;
     private String pagadorSenha;
     private String recebedorID;
-    private double quantia;
+    private double valor;
 
-    public BotPayment(Socket _socket, String _pagadorID, String _pagadorSenha, String _recebedorID, double _quantia) {
+    public BotPayment(Socket _socket, String _pagadorID, String _pagadorSenha, String _recebedorID, double _valor) {
         this.socket = _socket;
         this.pagadorID = _pagadorID;
         this.pagadorSenha = _pagadorSenha;
         this.recebedorID = _recebedorID;
-        this.quantia = _quantia;
+        this.valor = _valor;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class BotPayment extends Thread {
 
             output.writeUTF(JSONConverter.criarJSONLogin(login));
 
-            TransferData td = new TransferData(recebedorID, "Pagamento", pagadorID, quantia);
+            TransferData td = new TransferData(recebedorID, "Pagamento", pagadorID, valor);
 
             output.writeUTF(JSONConverter.criaJSONTransferData(td));
 

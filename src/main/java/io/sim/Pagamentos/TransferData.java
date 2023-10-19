@@ -7,14 +7,14 @@ public class TransferData {
     private String pagador;
     private String operacao;
     private String recebedor;
-    private double quantia;
+    private double valor;
     private Timestamp timestamp;
 
-    public TransferData(String _pagador, String _operacao, String _recebedor, double _quantia) {
+    public TransferData(String _pagador, String _operacao, String _recebedor, double _valor) {
         this.pagador = _pagador;
         this.operacao = _operacao;
         this.recebedor = _recebedor;
-        this.quantia = _quantia;
+        this.valor = _valor;
     }
 
     public void setAccountID(String _accoutID) {
@@ -37,8 +37,8 @@ public class TransferData {
         return recebedor;
     }
 
-    public double getQuantia() {
-        return quantia;
+    public double getvalor() {
+        return valor;
     }
 
     public void setTimestamp() {
@@ -52,9 +52,9 @@ public class TransferData {
     public String getDescricao() {
         String descricao = "";
         if (operacao.equals("Pagamento")) {
-            descricao = pagador + " transferiu R$" + quantia + " para " + recebedor;
+            descricao = pagador + " transferiu R$" + valor + " para " + recebedor;
         } else if (operacao.equals("Recebimento")) {
-            descricao = recebedor + " recebeu R$" + quantia + " de " + pagador;
+            descricao = recebedor + " recebeu R$" + valor + " de " + pagador;
         }
 
         return descricao;

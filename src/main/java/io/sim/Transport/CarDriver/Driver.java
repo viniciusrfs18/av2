@@ -32,7 +32,7 @@ public class Driver extends Thread {
     private boolean initRoute = false;
     private long saldoInicial;
 
-    private FuelStation postoCombustivel;
+    private FuelStation fs;
 
     public Driver(String _driverID, Car _car, long _taxaAquisicao, FuelStation _postoCombustivel, int _alphaBankServerPort, String _alphaBankServerHost) {
         this.driverID = _driverID;
@@ -44,7 +44,7 @@ public class Driver extends Thread {
         this.saldoInicial = 10000;
         this.alphaBankServerPort = _alphaBankServerPort;
         this.alphaBankServerHost = _alphaBankServerHost;
-        this.postoCombustivel = _postoCombustivel;
+        this.fs = _postoCombustivel;
     }
 
     @Override
@@ -56,8 +56,8 @@ public class Driver extends Thread {
             entrada = new DataInputStream(socket.getInputStream());
 			saida = new DataOutputStream(socket.getOutputStream());
 
-            this.account = new Account(driverID, 0);
-            AlphaBank.adicionarAccount(account);
+            this.account = new Account(driverID, 50);
+            AlphaBank.addAccount(account);
             account.start();
             
             System.out.println(driverID + " se conectou ao Servido do AlphaBank!!");
@@ -78,40 +78,64 @@ public class Driver extends Thread {
                     initRoute = true; 
                 }
 
-                if (this.car.getNivelDoTanque() < 7500){
+                if (this.car.getNivelDoTanque() < 3){
                     
                     //this.car.setSpeed(0);
-                    double litros = (this.car.getCapacidadeDoTanque() - this.car.getNivelDoTanque())/1000;
-                    double[] info = postoCombustivel.decideQtdLitros(litros, this.account.getSaldo());
-                    double precoAPagar = info[0];
-                    double qtdML = info[1];
-
-                    if (qtdML != 0) {
-                        try {
-                            System.out.println(driverID + " decidiu abastecer " + qtdML);
-                            this.car.preparaAbastecimento();
-                            postoCombustivel.abastecerCarro(this.car, qtdML);
-                            BotPayment bt = new BotPayment(socket, account.getAccountID(), account.getSenha(), postoCombustivel.getFSAccountID(), precoAPagar);
-                            bt.start();
-                        } catch (Exception e) {
+                    double litros = (10 - this.car.getNivelDoTanque());
+                    double qtdFuel = qtdToFuel(litros, this.account.getSaldo());
+                        
+                    try {
+                        System.out.println(driverID + " decidiu abastecer " + qtdFuel);
+                            
+                        this.car.stopToFuel();
+                            
+                        fs.fuelCar(this.car, qtdFuel);
+                            
+                        fsPayment(socket, (qtdFuel*fs.getPreco()));
+                        
+                    } catch (Exception e) {
                             e.printStackTrace();
-                        }
-                    } else {
-                        System.out.println("/////////////////////////////////////// " + driverID + " NÃO TEM DINHEIRO PRA ABASTECER!!");
                     }
                 }
 
                 System.out.println(account.getAccountID() + " tem R$" + account.getSaldo() + " de saldo");
             }
+            
             car.setFinalizado(true);  
             System.out.println("Encerrando " + driverID);
-            // this.car.join();
+            
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
+
+    //Função utilizada para criar o BotPayment responsável por realizar o pagamento do Driver a FuelStation
+    private void fsPayment(Socket socket, double valor){
+        BotPayment bt = new BotPayment(socket, account.getAccountID(), account.getSenha(), "FuelStation", valor);
+        bt.start();
+    }
+
+     // Método responsável por informar a quantidade de litros que o carro irá abastecer, esta quantidade será definida de acordo com o saldo bancário do motorista, simulando melhor a realidade.
+     public double qtdToFuel(double litros, double saldoDisp) { //
+        double preco = fs.getPreco();
+        double precoTotal = litros * preco;
+
+        if (saldoDisp > precoTotal) {
+            return litros;
+        } else {
+            double precoReduzindo = precoTotal;
+            while (saldoDisp < precoReduzindo) {
+                litros--;
+                precoReduzindo = litros*preco;
+                
+                if (litros <= 0) {
+                    return 0;
+                }
+            }
+            return litros;
+        }
+    }
+
 }

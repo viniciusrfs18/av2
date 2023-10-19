@@ -7,37 +7,40 @@ import java.net.Socket;
 
 import io.sim.JSONConverter;
 
-public class AccountManipulator extends Thread {
+public class AccountCommunication extends Thread {
 
     private Socket socket;
     private DataInputStream entrada;
     private DataOutputStream saida;
     private AlphaBank alphaBank;
 
-    public AccountManipulator(Socket _socket, AlphaBank _alphaBank) {
+    public AccountCommunication(Socket _socket, AlphaBank _alphaBank) {
         this.socket = _socket;
         this.alphaBank = _alphaBank;
     }
 
     @Override
     public void run() {
+
         boolean sair = false;
+        
         try {
+        
             entrada = new DataInputStream(socket.getInputStream());
             saida = new DataOutputStream(socket.getOutputStream());
             
             while (!sair) {
                 String[] login = JSONConverter.extraiLogin(entrada.readUTF());
 
-                if (alphaBank.fazerLogin(login)) {
+                if (alphaBank.conect(login)) {
                     TransferData tf = JSONConverter.extraiTransferData(entrada.readUTF());
                     System.out.println("Leu as informações de Operacao!!");
                     String operacao = tf.getOperacao();
                     switch (operacao) {
                         case "Pagamento":
                             String recebedorID = tf.getRecebedor();
-                            double quantia = tf.getQuantia();
-                            if (alphaBank.transferencia(login[0], recebedorID, quantia)) {
+                            double valor = tf.getvalor();
+                            if (alphaBank.transferencia(login[0], recebedorID, valor)) {
                                 saida.writeUTF(JSONConverter.criaRespostaTransferencia(true));
                                 alphaBank.adicionaRegistros(tf);
                             } else {

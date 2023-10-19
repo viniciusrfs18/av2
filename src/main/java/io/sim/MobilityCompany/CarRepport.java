@@ -9,7 +9,7 @@ import io.sim.JSONConverter;
 import io.sim.Transport.CarDriver.DrivingData;
 import io.sim.Transport.Rotas.Rota;
 
-public class CarManipulator extends Thread {
+public class CarRepport extends Thread {
     private Socket carSocket;
     private DataInputStream entrada;
     private DataOutputStream saida;
@@ -19,7 +19,7 @@ public class CarManipulator extends Thread {
     // Atributos para sincronização
     private Object sincroniza = new Object();
 
-    public CarManipulator(Socket _carSocket, Company _company) {
+    public CarRepport(Socket _carSocket, Company _company) {
         this.company = _company;
         this.carSocket = _carSocket;
         try {
@@ -41,7 +41,7 @@ public class CarManipulator extends Thread {
 
             // loop principal
             while(!StatusDoCarro.equals("encerrado")) {
-                // System.out.println("Aguardando mensagem...");
+                
                 DrivingData comunicacao = JSONConverter.extraiDrivingData(entrada.readUTF());
                 StatusDoCarro = comunicacao.getCarStatus(); // lê solicitacao do cliente
                 
@@ -53,32 +53,36 @@ public class CarManipulator extends Thread {
                 double distancia = calculaDistancia(latInicial, lonInicial, latAtual, lonAtual);
 
                 System.out.println(comunicacao.getCarID() + " percorreu " + distancia + " metros");
-		        if (distancia > (distanciaPercorrida + 1000)) {
+		        
+                if (distancia > (distanciaPercorrida + 1000)) {
 			        distanciaPercorrida += 1000;
                     String driverID = comunicacao.getDriverID();
-                    company.fazerPagamento(driverID);
+                    company.oneKmPay(driverID);
 		        }
                 
                 if (StatusDoCarro.equals("aguardando")) {
-                    if(!Company.temRotasDisponiveis()) {
+                
+                    if(!Company.routesAvaliable()) {
                         System.out.println("SMC - Sem mais rotas para liberar.");
                         Rota rota = new Rota("-1", "00000");
                         saida.writeUTF(JSONConverter.criaJSONRota(rota));
                         break;
                     }
 
-                    if(Company.temRotasDisponiveis()) {
+                    if(Company.routesAvaliable()) {
                         synchronized (sincroniza) {
                             Rota resposta = company.executarRota();
                             saida.writeUTF(JSONConverter.criaJSONRota(resposta));
                         }
                     }
+                
                 } else if(StatusDoCarro.equals("finalizado")) {
+
                     String routeID = comunicacao.getRouteIDSUMO();
                     System.out.println("SMC - Rota " + routeID + " finalizada.");
                     company.terminarRota(routeID);
                     distanciaPercorrida = 0;
-                    System.out.println("Aguardando mensagem...");
+                
                 } else if(StatusDoCarro.equals("rodando")) {
                     // a principio, nao faz nada
                 } else if (StatusDoCarro.equals("encerrado")) {
@@ -95,6 +99,7 @@ public class CarManipulator extends Thread {
         }
     }
 
+    // Método responsável por calcular a distância percorrida pelo Carro com base nas latitudes.
     private double calculaDistancia(double lat1, double lon1, double lat2, double lon2) {
 		double raioTerra = 6371000;
 	
