@@ -22,7 +22,7 @@ public class TransferData {
     }
 
     public String getAccountID() {
-        return this.accountID;
+        return accountID;
     }
 
     public String getPagador() {
