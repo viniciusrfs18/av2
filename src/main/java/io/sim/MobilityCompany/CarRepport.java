@@ -2,9 +2,15 @@ package io.sim.MobilityCompany;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.Semaphore;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.json.JSONObject;
 
 import io.sim.Transport.CarDriver.DrivingData;
@@ -14,7 +20,6 @@ public class CarRepport extends Thread {
     private Socket carSocket;
     private DataInputStream entrada;
     private DataOutputStream saida;
-
     private Company company;
 
     // Atributos para sincronização
@@ -36,6 +41,7 @@ public class CarRepport extends Thread {
 
     @Override
     public void run() {
+
         try {
             String StatusDoCarro = "";
             double distanciaPercorrida = 0;
@@ -46,6 +52,8 @@ public class CarRepport extends Thread {
                 DrivingData comunicacao = extraiDrivingData(entrada.readUTF());
                 StatusDoCarro = comunicacao.getCarStatus(); // lê solicitacao do cliente
                 
+                company.sendComunicacao(comunicacao);
+
                 double latInicial = comunicacao.getLatInicial();
                 double lonInicial = comunicacao.getLonInicial();
                 double latAtual = comunicacao.getLatAtual();
@@ -85,7 +93,7 @@ public class CarRepport extends Thread {
                     distanciaPercorrida = 0;
                 
                 } else if(StatusDoCarro.equals("rodando")) {
-                    // a principio, nao faz nada
+                    
                 } else if (StatusDoCarro.equals("encerrado")) {
                     break;
                 }
@@ -97,7 +105,7 @@ public class CarRepport extends Thread {
             carSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        } 
     }
 
     // Método responsável por calcular a distância percorrida pelo Carro com base nas latitudes.
