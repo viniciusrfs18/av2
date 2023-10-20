@@ -8,11 +8,12 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.json.JSONObject;
+
 import it.polito.appeal.traci.SumoTraciConnection;
 import de.tudresden.sumo.objects.SumoColor;
 import de.tudresden.sumo.objects.SumoPosition2D;
 import de.tudresden.sumo.objects.SumoStringList;
-import io.sim.JSONConverter;
 import io.sim.MobilityCompany.Company;
 import io.sim.Transport.TransportService;
 import io.sim.Transport.Fuel.SetFuelLevel;
@@ -111,9 +112,9 @@ public class Car extends Vehicle implements Runnable {
 			while (!finalizado) {
 				// Recebendo Rota
 				// Manda "aguardando" da primeira vez
-				saida.writeUTF(JSONConverter.criarJSONDrivingData(drivingDataAtual));
+				saida.writeUTF(criarJSONDrivingData(drivingDataAtual));
 				System.out.println(this.idCar + " aguardando rota");
-				rota = JSONConverter.extraiRota(entrada.readUTF());
+				rota = extraiRota(entrada.readUTF());
 
 				if(rota.getID().equals("-1")) {
 					System.out.println(this.idCar +" - Sem rotas a receber.");
@@ -148,7 +149,7 @@ public class Car extends Vehicle implements Runnable {
 						System.out.println(this.idCar + " acabou a rota.");
 						//this.ts.setOn_off(false);
 						this.carStatus = "finalizado";
-						saida.writeUTF(JSONConverter.criarJSONDrivingData(drivingDataAtual));
+						saida.writeUTF(criarJSONDrivingData(drivingDataAtual));
 						this.on_off = false;
 						break;
 					} 
@@ -167,7 +168,7 @@ public class Car extends Vehicle implements Runnable {
 							this.carStatus = "rodando";
 						}
 						
-						saida.writeUTF(JSONConverter.criarJSONDrivingData(drivingDataAtual));
+						saida.writeUTF(criarJSONDrivingData(drivingDataAtual));
 						
 						if(this.carStatus.equals("finalizado")) {
 							this.on_off = false;
@@ -489,6 +490,39 @@ public class Car extends Vehicle implements Runnable {
 
 		double[] coordGeo = new double[] { lat, lon };
 		return coordGeo;
+	}
+
+	private Rota extraiRota(String rotaJSON) {
+        JSONObject rotaJSONObj = new JSONObject(rotaJSON);
+		Rota rota = new Rota(rotaJSONObj.getString("ID da Rota"), rotaJSONObj.getString("Edges"));
+        return rota;
+	}
+
+	private String criarJSONDrivingData(DrivingData drivingData) {
+        JSONObject drivingDataJSON = new JSONObject();
+        drivingDataJSON.put("Car ID", drivingData.getCarID());
+        drivingDataJSON.put("Driver ID", drivingData.getDriverID());
+        drivingDataJSON.put("Car Status", drivingData.getCarStatus());
+		drivingDataJSON.put("Latitude Inicial", drivingData.getLatInicial());
+        drivingDataJSON.put("Longitude Inicial", drivingData.getLonInicial());
+        drivingDataJSON.put("Latitude Atual", drivingData.getLatAtual());
+        drivingDataJSON.put("Longitude Atual", drivingData.getLonAtual());
+		drivingDataJSON.put("TimeStamp", drivingData.getTimeStamp());
+		drivingDataJSON.put("X_Position", drivingData.getX_Position());
+		drivingDataJSON.put("Y_Position", drivingData.getY_Position());
+		drivingDataJSON.put("RoadIDSUMO", drivingData.getRoadIDSUMO());
+		drivingDataJSON.put("RouteIDSUMO", drivingData.getRouteIDSUMO());
+		drivingDataJSON.put("Speed", drivingData.getSpeed());
+		drivingDataJSON.put("Odometer", drivingData.getOdometer());
+		drivingDataJSON.put("FuelConsumption", drivingData.getFuelConsumption());
+		drivingDataJSON.put("AverageFuelConsumption", drivingData.getAverageFuelConsumption());
+		drivingDataJSON.put("FuelType", drivingData.getFuelType());
+		drivingDataJSON.put("FuelPrice", drivingData.getFuelPrice());
+		drivingDataJSON.put("Co2Emission", drivingData.getCo2Emission());
+		drivingDataJSON.put("HCEmission", drivingData.getHCEmission());
+		drivingDataJSON.put("PersonCapacity", drivingData.getPersonCapacity());
+		drivingDataJSON.put("PersonNumber", drivingData.getPersonNumber());
+        return drivingDataJSON.toString();
 	}
 
 }
