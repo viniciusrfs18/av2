@@ -7,6 +7,7 @@ import java.net.Socket;
 
 import org.json.JSONObject;
 
+import io.sim.Crypto;
 import io.sim.Transport.CarDriver.DrivingData;
 import io.sim.Transport.Rotas.Rota;
 
@@ -45,7 +46,7 @@ public class CarRepport extends Thread {
                 
                 DrivingData comunicacao = extraiDrivingData(entrada.readUTF());
                 StatusDoCarro = comunicacao.getCarStatus(); // lê solicitacao do cliente
-                
+
                 double latInicial = comunicacao.getLatInicial();
                 double lonInicial = comunicacao.getLonInicial();
                 double latAtual = comunicacao.getLatAtual();
@@ -96,6 +97,8 @@ public class CarRepport extends Thread {
             saida.close();
             carSocket.close();
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

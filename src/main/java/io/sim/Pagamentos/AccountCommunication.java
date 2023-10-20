@@ -7,6 +7,8 @@ import java.net.Socket;
 
 import org.json.JSONObject;
 
+import io.sim.Crypto;
+
 public class AccountCommunication extends Thread {
 
     private Socket socket;
@@ -29,11 +31,16 @@ public class AccountCommunication extends Thread {
             entrada = new DataInputStream(socket.getInputStream());
             saida = new DataOutputStream(socket.getOutputStream());
             
+            int numBytesMsg;
+            byte[] mensagemEncriptada;
+
             while (!sair) {
-                String[] login = extraiLogin(entrada.readUTF());
+                numBytesMsg = extraiTamanhoBytes(Crypto.decripta(entrada.readNBytes(Crypto.getTamNumBytes())));
+                String[] login = extraiLogin(Crypto.decripta(entrada.readNBytes(numBytesMsg)));
 
                 if (alphaBank.conect(login)) {
-                    TransferData tf = extraiTransferData(entrada.readUTF());
+                    numBytesMsg = extraiTamanhoBytes(Crypto.decripta(entrada.readNBytes(Crypto.getTamNumBytes())));
+                    TransferData tf = extraiTransferData(Crypto.decripta(entrada.readNBytes(numBytesMsg)));
                     
                     System.out.println("Leu as informações de Operacao!!");
                     String operacao = tf.getOperacao();
@@ -43,10 +50,14 @@ public class AccountCommunication extends Thread {
                             double valor = tf.getvalor();
                             System.out.println(valor + " " + recebedorID);
                             if (alphaBank.transferencia(login[0], recebedorID, valor)) {
-                                saida.writeUTF(criaRespostaTransferencia(true));
+                                mensagemEncriptada = Crypto.encripta(criaRespostaTransferencia(true));
+                                saida.write(Crypto.encripta(criaJSONTamanhoBytes(mensagemEncriptada.length)));
+                                saida.write(mensagemEncriptada);
                                 alphaBank.adicionaRegistros(tf);
                             } else {
-                                saida.writeUTF(criaRespostaTransferencia(false));
+                                mensagemEncriptada = Crypto.encripta(criaRespostaTransferencia(false));
+                                saida.write(Crypto.encripta(criaJSONTamanhoBytes(mensagemEncriptada.length)));
+                                saida.write(mensagemEncriptada);
                             }
                             
                             break;
@@ -62,6 +73,9 @@ public class AccountCommunication extends Thread {
             }
         } catch (IOException ex) {
             ex.printStackTrace();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
     
@@ -87,6 +101,18 @@ public class AccountCommunication extends Thread {
         JSONObject my_json = new JSONObject();
         my_json.put("Resposta", sucesso);
         return my_json.toString();
+    }
+
+    private String criaJSONTamanhoBytes(int numBytes) {
+        JSONObject my_json = new JSONObject();
+        my_json.put("Num Bytes", numBytes);
+        return my_json.toString();
+    }
+
+    private int extraiTamanhoBytes(String numBytesJSON) {
+        JSONObject my_json = new JSONObject(numBytesJSON);
+        int numBytes = my_json.getInt("Num Bytes");
+        return numBytes;
     }
 
 }

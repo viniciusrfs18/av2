@@ -2,8 +2,13 @@ package io.sim.Transport.CarDriver;
 
 import it.polito.appeal.traci.SumoTraciConnection;
 
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Random;
+
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import de.tudresden.sumo.objects.SumoColor;
 import io.sim.Transport.Fuel.FuelStation;
@@ -28,7 +33,7 @@ public class driverCreator {
             String carID = "Car" + (i + 1);
 
             Car car = new Car(on_off, carID, cor, driverID, sumo, taxaAquisicao, fuelType, fuelPreferential, fuelPrice, personCapacity, personNumber, host, portaCompanny);
-            
+
             Driver driver = new Driver(driverID, car, taxaAquisicao, fuelStation, portaAlphaBank, host);
             drivers.add(driver);
             
@@ -36,5 +41,7 @@ public class driverCreator {
 
         return drivers;
     }
+
+    
 
 }

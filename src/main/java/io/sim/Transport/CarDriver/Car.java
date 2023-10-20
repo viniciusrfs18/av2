@@ -21,6 +21,7 @@ import it.polito.appeal.traci.SumoTraciConnection;
 import de.tudresden.sumo.objects.SumoColor;
 import de.tudresden.sumo.objects.SumoPosition2D;
 import de.tudresden.sumo.objects.SumoStringList;
+import io.sim.Crypto;
 import io.sim.MobilityCompany.Company;
 import io.sim.Transport.TransportService;
 import io.sim.Transport.Fuel.SetFuelLevel;
@@ -102,7 +103,6 @@ public class Car extends Vehicle implements Runnable {
 												0, 0, 0, 1, this.fuelType,
 												this.fuelPrice,0, 0, this.personCapacity, this.personNumber);
 		
-		criaSheet();
 	}
 
 	@Override
@@ -116,14 +116,19 @@ public class Car extends Vehicle implements Runnable {
             entrada = new DataInputStream(socket.getInputStream());
 			saida = new DataOutputStream(socket.getOutputStream());
 
-			// System.out.println(this.idCar + " conectado!!");
+			int numBytesMsg;
+			byte[] mensagemEncriptada;
 
 			while (!finalizado) {
 				// Recebendo Rota
 				// Manda "aguardando" da primeira vez
-				saida.writeUTF(criarJSONDrivingData(drivingDataAtual));
+				mensagemEncriptada = Crypto.encripta(criarJSONDrivingData(drivingDataAtual));
+				saida.write(Crypto.encripta(criaJSONTamanhoBytes(mensagemEncriptada.length)));
+				saida.write(mensagemEncriptada);
+
 				System.out.println(this.idCar + " aguardando rota");
-				rota = extraiRota(entrada.readUTF());
+				numBytesMsg = extraiTamanhoBytes(Crypto.decripta(entrada.readNBytes(Crypto.getTamNumBytes())));
+                rota = extraiRota(Crypto.decripta(entrada.readNBytes(numBytesMsg)));
 
 				if(rota.getID().equals("-1")) {
 					System.out.println(this.idCar +" - Sem rotas a receber.");
@@ -135,7 +140,6 @@ public class Car extends Vehicle implements Runnable {
 
 				ts = new TransportService(true, this.idCar, rota, this, this.sumo);
 				ts.start();
-				//System.out.println("CAR - TransportService ativo");
 			
 				String edgeFinal = this.getEdgeFinal(); 
 				this.on_off = true;
@@ -158,7 +162,9 @@ public class Car extends Vehicle implements Runnable {
 						System.out.println(this.idCar + " acabou a rota.");
 						//this.ts.setOn_off(false);
 						this.carStatus = "finalizado";
-						saida.writeUTF(criarJSONDrivingData(drivingDataAtual));
+						mensagemEncriptada = Crypto.encripta(criarJSONDrivingData(drivingDataAtual));
+						saida.write(Crypto.encripta(criaJSONTamanhoBytes(mensagemEncriptada.length)));
+						saida.write(mensagemEncriptada);
 						this.on_off = false;
 						break;
 					} 
@@ -197,11 +203,13 @@ public class Car extends Vehicle implements Runnable {
 					this.carStatus = "encerrado";
 				}
 			}
+
 			System.out.println("Encerrando: " + idCar);
 			entrada.close();
 			saida.close();
 			socket.close();
 			this.ts.setTerminado(true);
+			
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -261,7 +269,7 @@ public class Car extends Vehicle implements Runnable {
 				// Criar relat�rio auditoria / alertas
 				// velocidadePermitida = (double)
 				// sumo.do_job_get(Vehicle.getAllowedSpeed(this.idSumoVehicle));
-				atualizaPlanilhaCar(drivingDataAtual);
+				//atualizaPlanilhaCar(drivingDataAtual);
 				this.drivingRepport.add(drivingDataAtual);
 
 				//System.out.println("Data: " + this.drivingRepport.size());
@@ -533,13 +541,13 @@ public class Car extends Vehicle implements Runnable {
         return drivingDataJSON.toString();
 	}
 
-	private void criaSheet(){
+	private void criaSheet(String carID){
 		String nomeDoArquivo = "carData.xlsx";
 
 		try (Workbook workbook = new XSSFWorkbook();
             FileOutputStream outputStream = new FileOutputStream(nomeDoArquivo)) {
-			org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet(getIdCar());
-            
+			org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet(carID);
+
             Row headerRow = sheet.createRow(0);
             headerRow.createCell(0).setCellValue("Timestamp");
             headerRow.createCell(1).setCellValue("ID Car");
@@ -560,7 +568,7 @@ public class Car extends Vehicle implements Runnable {
 
 	}
 
-	private void atualizaPlanilhaCar(DrivingData data){
+	private synchronized void atualizaPlanilhaCar(DrivingData data){
         
         String nomeDoArquivo = "carData.xlsx";
 
@@ -587,13 +595,23 @@ public class Car extends Vehicle implements Runnable {
         
         // Salve as alterações na planilha
         workbook.write(outputStream);
-
-        //System.out.println("Dados adicionados com sucesso!");
         
         } catch (IOException e) {
             e.printStackTrace();
         }
             
+    }
+
+	private String criaJSONTamanhoBytes(int numBytes) {
+        JSONObject my_json = new JSONObject();
+        my_json.put("Num Bytes", numBytes);
+        return my_json.toString();
+    }
+
+    private int extraiTamanhoBytes(String numBytesJSON) {
+        JSONObject my_json = new JSONObject(numBytesJSON);
+        int numBytes = my_json.getInt("Num Bytes");
+        return numBytes;
     }
 
 }
