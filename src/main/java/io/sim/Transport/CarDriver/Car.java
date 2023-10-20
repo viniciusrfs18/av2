@@ -4,10 +4,17 @@ import de.tudresden.sumo.cmd.Vehicle;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONObject;
 
 import it.polito.appeal.traci.SumoTraciConnection;
@@ -94,6 +101,8 @@ public class Car extends Vehicle implements Runnable {
 												0, 0, 0, 0, "", "", 
 												0, 0, 0, 1, this.fuelType,
 												this.fuelPrice,0, 0, this.personCapacity, this.personNumber);
+		
+		criaSheet();
 	}
 
 	@Override
@@ -157,8 +166,7 @@ public class Car extends Vehicle implements Runnable {
 					Thread.sleep(this.acquisitionRate);
 					
 					if(!verificaRotaTerminada(edgeAtual, edgeFinal)) {
-						System.out.println(this.idCar + " -> edge atual: " + edgeAtual);
-						System.out.println(this.idCar + " -> fuelTank: " + fuelTank);
+						
 						double[] coordGeo = calculaCoordGeograficas();
 						latAtual = coordGeo[0];
 						lonAtual = coordGeo[1];
@@ -253,7 +261,7 @@ public class Car extends Vehicle implements Runnable {
 				// Criar relat�rio auditoria / alertas
 				// velocidadePermitida = (double)
 				// sumo.do_job_get(Vehicle.getAllowedSpeed(this.idSumoVehicle));
-
+				atualizaPlanilhaCar(drivingDataAtual);
 				this.drivingRepport.add(drivingDataAtual);
 
 				//System.out.println("Data: " + this.drivingRepport.size());
@@ -524,5 +532,68 @@ public class Car extends Vehicle implements Runnable {
 		drivingDataJSON.put("PersonNumber", drivingData.getPersonNumber());
         return drivingDataJSON.toString();
 	}
+
+	private void criaSheet(){
+		String nomeDoArquivo = "carData.xlsx";
+
+		try (Workbook workbook = new XSSFWorkbook();
+            FileOutputStream outputStream = new FileOutputStream(nomeDoArquivo)) {
+			org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet(getIdCar());
+            
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Timestamp");
+            headerRow.createCell(1).setCellValue("ID Car");
+            headerRow.createCell(2).setCellValue("ID Route");
+            headerRow.createCell(3).setCellValue("Speed");
+            headerRow.createCell(4).setCellValue("Distance");
+			headerRow.createCell(5).setCellValue("FuelConsumption");
+            headerRow.createCell(6).setCellValue("FuelType");
+            headerRow.createCell(7).setCellValue("CO2Emission");
+            headerRow.createCell(8).setCellValue("Longitude (Lon)");
+            headerRow.createCell(9).setCellValue("Latitude (Lat)");
+
+            // Salve a planilha com o cabeçalho
+            workbook.write(outputStream);
+		} catch (Exception e) {
+			
+		} 
+
+	}
+
+	private void atualizaPlanilhaCar(DrivingData data){
+        
+        String nomeDoArquivo = "carData.xlsx";
+
+        try (FileInputStream inputStream = new FileInputStream(nomeDoArquivo);
+             Workbook workbook = WorkbookFactory.create(inputStream);
+             FileOutputStream outputStream = new FileOutputStream(nomeDoArquivo)) {
+           
+        org.apache.poi.ss.usermodel.Sheet sheet = workbook.getSheet(getIdCar());    
+        
+        int lastRowNum = sheet.getLastRowNum();
+        Row newRow = sheet.createRow(lastRowNum + 1);
+
+            // Preencha as células da nova linha com os dados da classe TransferData
+        newRow.createCell(0).setCellValue(data.getTimeStamp());
+        newRow.createCell(1).setCellValue(data.getCarID());
+        newRow.createCell(2).setCellValue(data.getRouteIDSUMO());
+        newRow.createCell(3).setCellValue(data.getSpeed());
+        newRow.createCell(4).setCellValue(data.getOdometer()); 
+		newRow.createCell(5).setCellValue(data.getFuelConsumption());
+		newRow.createCell(6).setCellValue(data.getFuelType());
+		newRow.createCell(7).setCellValue(data.getCo2Emission());
+		newRow.createCell(8).setCellValue(data.getLonAtual());
+		newRow.createCell(9).setCellValue(data.getLatAtual());
+        
+        // Salve as alterações na planilha
+        workbook.write(outputStream);
+
+        //System.out.println("Dados adicionados com sucesso!");
+        
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+            
+    }
 
 }

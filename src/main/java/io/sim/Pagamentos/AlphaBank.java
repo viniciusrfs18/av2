@@ -1,9 +1,16 @@
 package io.sim.Pagamentos;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+
+import org.apache.poi.sl.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class AlphaBank extends Thread {
     
@@ -21,7 +28,7 @@ public class AlphaBank extends Thread {
         accounts = new ArrayList<Account>();
         registrosPendentes = new ArrayList<TransferData>();
         this.sincroniza = new Object();
-    
+        createTransfSheet();
     }
 
     @Override
@@ -158,6 +165,31 @@ public class AlphaBank extends Thread {
             return null;
         }
 
+    }
+
+    private void createTransfSheet(){
+        
+        String nomeDoArquivo = "transacoes.xlsx";
+
+        try (Workbook workbook = new XSSFWorkbook();
+             FileOutputStream outputStream = new FileOutputStream(nomeDoArquivo)) {
+
+            // Crie uma nova planilha (aba)
+            org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("All");
+
+            // Crie o cabeçalho na primeira linha
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Account ID");
+            headerRow.createCell(1).setCellValue("Pagador");
+            headerRow.createCell(2).setCellValue("Operacao");
+            headerRow.createCell(3).setCellValue("Recebedor");
+            headerRow.createCell(4).setCellValue("Valor");
+
+            // Salve a planilha com o cabeçalho
+            workbook.write(outputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
