@@ -2,10 +2,16 @@ package io.sim.MobilityCompany;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import it.polito.appeal.traci.SumoTraciConnection;
 import de.tudresden.sumo.cmd.Vehicle;
 import de.tudresden.sumo.objects.SumoStringList;
@@ -164,4 +170,5 @@ public class Company extends Thread {
         BotPayment bt = new BotPayment(socket, "Company",  account.getSenha(), driverID, preco);
         bt.start();
     }
+
 }

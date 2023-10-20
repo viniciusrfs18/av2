@@ -5,7 +5,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-import io.sim.JSONConverter;
+import org.json.JSONObject;
 
 public class BotPayment extends Thread {
     private Socket socket;
@@ -31,16 +31,16 @@ public class BotPayment extends Thread {
 
             String[] login = { pagadorID, pagadorSenha };
 
-            output.writeUTF(JSONConverter.criarJSONLogin(login));
+            output.writeUTF(criarJSONLogin(login));
 
             TransferData td = new TransferData(pagadorID, "Pagamento", recebedorID, valor);
             //System.out.println("!!!!!!!!!! - BP: " + recebedorID + " " + pagadorID);
 
-            output.writeUTF(JSONConverter.criaJSONTransferData(td));
+            output.writeUTF(criaJSONTransferData(td));
 
             // Aguarde a resposta do servidor AlphaBank
             String resposta = input.readUTF();
-            boolean sucesso = JSONConverter.extraiResposta(resposta);
+            boolean sucesso = extraiResposta(resposta);
 
             if (sucesso) {
                 System.out.println("Transferência bem-sucedida!");
@@ -50,6 +50,27 @@ public class BotPayment extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private String criaJSONTransferData(TransferData transferData) {
+        JSONObject transferDataJSON = new JSONObject();
+		transferDataJSON.put("ID do Pagador", transferData.getPagador());
+        transferDataJSON.put("Operacao", transferData.getOperacao());
+        transferDataJSON.put("ID do Recebedor", transferData.getRecebedor());
+		transferDataJSON.put("valor", transferData.getvalor());
+        return transferDataJSON.toString();
+	}
+
+    private String criarJSONLogin(String[] login) {
+        JSONObject loginJSONObj = new JSONObject();
+        loginJSONObj.put("ID do Pagador", login[0]);
+		loginJSONObj.put("Senha do Pagador", login[1]);
+        return loginJSONObj.toString();
+    }
+
+    private boolean extraiResposta(String respostaJSON) {
+        JSONObject resposta = new JSONObject(respostaJSON);
+        return resposta.getBoolean("Resposta");
     }
 
 }
