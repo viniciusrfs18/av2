@@ -91,7 +91,7 @@ public class Car extends Vehicle implements Runnable {
 		this.fuelPrice = _fuelPrice;
 		this.personCapacity = _personCapacity;
 		this.personNumber = _personNumber;
-		this.speed = 100;
+		this.speed = setRandomSpeed();
 		this.rota = null;
 		this.fuelTank = 10;
 		this.carStatus = "aguardando";
@@ -102,13 +102,12 @@ public class Car extends Vehicle implements Runnable {
 												0, 0, 0, 1, this.fuelType,
 												this.fuelPrice,0, 0, this.personCapacity, this.personNumber);
 		
-		criaSheet();
 	}
 
 	@Override
 	public void run() {
 		System.out.println(this.idCar + " iniciando");
-		SetFuelLevel sf = new SetFuelLevel(this, 0.01); //VERIFICAR CONSUMO
+		SetFuelLevel sf = new SetFuelLevel(this, 0.05); //VERIFICAR CONSUMO
 		sf.start();
 
 		try {
@@ -214,11 +213,6 @@ public class Car extends Vehicle implements Runnable {
 			if (!this.getSumo().isClosed()) {
 				SumoPosition2D sumoPosition2D;
 				sumoPosition2D = (SumoPosition2D) sumo.do_job_get(Vehicle.getPosition(this.idCar));
-
-				// System.out.println("CarID: " + this.getIdCar());
-				// System.out.println("RoadID: " + (String) this.sumo.do_job_get(Vehicle.getRoadID(this.idCar)));
-				// System.out.println("RouteID: " + (String) this.sumo.do_job_get(Vehicle.getRouteID(this.idCar)));
-				// System.out.println("RouteIndex: " + this.sumo.do_job_get(Vehicle.getRouteIndex(this.idCar)));
 				
 				// Criacao dos dados de conducao do veiculo
 				drivingDataAtual = new DrivingData(
@@ -258,60 +252,12 @@ public class Car extends Vehicle implements Runnable {
 
 				);
 
-				// Criar relat�rio auditoria / alertas
-				// velocidadePermitida = (double)
-				// sumo.do_job_get(Vehicle.getAllowedSpeed(this.idSumoVehicle));
-				atualizaPlanilhaCar(drivingDataAtual);
 				this.drivingRepport.add(drivingDataAtual);
-
-				//System.out.println("Data: " + this.drivingRepport.size());
-				// System.out.println("idCar = " + this.drivingRepport.get(this.drivingRepport.size() - 1).getCarID());
-				//System.out.println(
-				//		"timestamp = " + this.drivingRepport.get(this.drivingRepport.size() - 1).getTimeStamp());
-				//System.out.println("X=" + this.drivingRepport.get(this.drivingRepport.size() - 1).getX_Position() + ", "
-				//		+ "Y=" + this.drivingRepport.get(this.drivingRepport.size() - 1).getY_Position());
-				// System.out.println("speed = " + this.drivingRepport.get(this.drivingRepport.size() - 1).getSpeed());
-				// System.out.println("odometer = " + this.drivingRepport.get(this.drivingRepport.size() - 1).getOdometer());
-				// System.out.println("Fuel Consumption = "
-				// 		+ this.drivingRepport.get(this.drivingRepport.size() - 1).getFuelConsumption());
-				//System.out.println("Fuel Type = " + this.fuelType);
-				//System.out.println("Fuel Price = " + this.fuelPrice);
-
-				// System.out.println(
-				// 		"CO2 Emission = " + this.drivingRepport.get(this.drivingRepport.size() - 1).getCo2Emission());
-
-				//System.out.println();
-				//System.out.println("************************");
-				//System.out.println("testes: ");
-				//System.out.println("getAngle = " + (double) sumo.do_job_get(Vehicle.getAngle(this.idCar)));
-				//System.out
-				//		.println("getAllowedSpeed = " + (double) sumo.do_job_get(Vehicle.getAllowedSpeed(this.idCar)));
-				//System.out.println("getSpeed = " + (double) sumo.do_job_get(Vehicle.getSpeed(this.idCar)));
-				//System.out.println(
-				//		"getSpeedDeviation = " + (double) sumo.do_job_get(Vehicle.getSpeedDeviation(this.idCar)));
-				//System.out.println("getMaxSpeedLat = " + (double) sumo.do_job_get(Vehicle.getMaxSpeedLat(this.idCar)));
-				//System.out.println("getSlope = " + (double) sumo.do_job_get(Vehicle.getSlope(this.idCar))
-				//		+ " the slope at the current position of the vehicle in degrees");
-				//System.out.println(
-				//		"getSpeedWithoutTraCI = " + (double) sumo.do_job_get(Vehicle.getSpeedWithoutTraCI(this.idCar))
-				//				+ " Returns the speed that the vehicle would drive if no speed-influencing\r\n"
-				//				+ "command such as setSpeed or slowDown was given.");
-
-				//sumo.do_job_set(Vehicle.setSpeed(this.idCar, (1000 / 3.6)));
-				//double auxspeed = (double) sumo.do_job_get(Vehicle.getSpeed(this.idCar));
-				//System.out.println("new speed = " + (auxspeed * 3.6));
-				//System.out.println(
-				//		"getSpeedDeviation = " + (double) sumo.do_job_get(Vehicle.getSpeedDeviation(this.idCar)));
 				
 				if (carStatus != "abastecendo") {
 					this.sumo.do_job_set(Vehicle.setSpeed(this.idCar, speed));
-					this.sumo.do_job_set(Vehicle.setSpeedMode(this.idCar, 31));
+					this.sumo.do_job_set(Vehicle.setSpeedMode(this.idCar, 0));
 				}
-				
-				// System.out.println("getPersonNumber = " + sumo.do_job_get(Vehicle.getPersonNumber(this.idCar)));
-				//System.out.println("getPersonIDList = " + sumo.do_job_get(Vehicle.getPersonIDList(this.idCar)));
-				
-				// System.out.println("************************");
 
 			} else {
 				this.on_off = false;
@@ -430,7 +376,8 @@ public class Car extends Vehicle implements Runnable {
 	}
 
 	public void voltarAndar() throws Exception {
-		this.sumo.do_job_set(Vehicle.setSpeed(this.idCar, setRandomSpeed()));
+		this.speed = setRandomSpeed();
+		this.sumo.do_job_set(Vehicle.setSpeed(this.idCar, speed));
 		//this.sumo.do_job_set(Vehicle.setSpeedMode(this.idCar, 31));
 	}
 
@@ -532,68 +479,5 @@ public class Car extends Vehicle implements Runnable {
 		drivingDataJSON.put("PersonNumber", drivingData.getPersonNumber());
         return drivingDataJSON.toString();
 	}
-
-	private void criaSheet(){
-		String nomeDoArquivo = "carData.xlsx";
-
-		try (Workbook workbook = new XSSFWorkbook();
-            FileOutputStream outputStream = new FileOutputStream(nomeDoArquivo)) {
-			org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet(getIdCar());
-            
-            Row headerRow = sheet.createRow(0);
-            headerRow.createCell(0).setCellValue("Timestamp");
-            headerRow.createCell(1).setCellValue("ID Car");
-            headerRow.createCell(2).setCellValue("ID Route");
-            headerRow.createCell(3).setCellValue("Speed");
-            headerRow.createCell(4).setCellValue("Distance");
-			headerRow.createCell(5).setCellValue("FuelConsumption");
-            headerRow.createCell(6).setCellValue("FuelType");
-            headerRow.createCell(7).setCellValue("CO2Emission");
-            headerRow.createCell(8).setCellValue("Longitude (Lon)");
-            headerRow.createCell(9).setCellValue("Latitude (Lat)");
-
-            // Salve a planilha com o cabeçalho
-            workbook.write(outputStream);
-		} catch (Exception e) {
-			
-		} 
-
-	}
-
-	private void atualizaPlanilhaCar(DrivingData data){
-        
-        String nomeDoArquivo = "carData.xlsx";
-
-        try (FileInputStream inputStream = new FileInputStream(nomeDoArquivo);
-             Workbook workbook = WorkbookFactory.create(inputStream);
-             FileOutputStream outputStream = new FileOutputStream(nomeDoArquivo)) {
-           
-        org.apache.poi.ss.usermodel.Sheet sheet = workbook.getSheet(getIdCar());    
-        
-        int lastRowNum = sheet.getLastRowNum();
-        Row newRow = sheet.createRow(lastRowNum + 1);
-
-            // Preencha as células da nova linha com os dados da classe TransferData
-        newRow.createCell(0).setCellValue(data.getTimeStamp());
-        newRow.createCell(1).setCellValue(data.getCarID());
-        newRow.createCell(2).setCellValue(data.getRouteIDSUMO());
-        newRow.createCell(3).setCellValue(data.getSpeed());
-        newRow.createCell(4).setCellValue(data.getOdometer()); 
-		newRow.createCell(5).setCellValue(data.getFuelConsumption());
-		newRow.createCell(6).setCellValue(data.getFuelType());
-		newRow.createCell(7).setCellValue(data.getCo2Emission());
-		newRow.createCell(8).setCellValue(data.getLonAtual());
-		newRow.createCell(9).setCellValue(data.getLatAtual());
-        
-        // Salve as alterações na planilha
-        workbook.write(outputStream);
-
-        //System.out.println("Dados adicionados com sucesso!");
-        
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-            
-    }
 
 }

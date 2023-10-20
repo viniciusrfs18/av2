@@ -2,6 +2,7 @@ package io.sim.MobilityCompany;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import it.polito.appeal.traci.SumoTraciConnection;
@@ -18,6 +20,7 @@ import de.tudresden.sumo.objects.SumoStringList;
 import io.sim.Pagamentos.Account;
 import io.sim.Pagamentos.AlphaBank;
 import io.sim.Pagamentos.BotPayment;
+import io.sim.Transport.CarDriver.DrivingData;
 import io.sim.Transport.Rotas.Rota;
 
 public class Company extends Thread {
@@ -35,6 +38,7 @@ public class Company extends Thread {
     private ArrayList<Rota> rotasTerminadas;
     private static double preco;
     private static int numDrivers;
+    private static ArrayList<DrivingData> dd;
 
     // Atributos como cliente de AlphaBank
     private Socket socket;
@@ -61,6 +65,7 @@ public class Company extends Thread {
         rotasTerminadas = new ArrayList<Rota>();
         preco = 3.25;
         numDrivers = _numDrivers;
+        dd = new ArrayList<DrivingData>();
 
         // Atributos como cliente de AlphaBank
         alphaBankServerPort = _alphaBankServerPort;
@@ -101,6 +106,7 @@ public class Company extends Thread {
 
                 // Talvez passar essa função pra outra classe
                 if(conectandoCars) {
+                    boolean start = true;
                     for(int i = 0; i < numDrivers; i++) {
                         // conecta os clientes -> IMP mudar para ser feito paralelamente (ou n)
                         System.out.println("Company - Esperando para conectar " + (i + 1));
@@ -110,6 +116,12 @@ public class Company extends Thread {
                         // Cria uma thread para comunicacao de cada Car
                         CarRepport cr = new CarRepport(socket, this);
                         cr.start();
+
+                        if (start) {
+                            atualizaSheet att = new atualizaSheet(this);
+                            att.start();
+                            start = false;
+                        }
                     }
                     System.out.println("Company: Todos os drivers criados");
                     conectandoCars = false;
@@ -169,6 +181,18 @@ public class Company extends Thread {
     public void oneKmPay(String driverID) throws IOException {
         BotPayment bt = new BotPayment(socket, "Company",  account.getSenha(), driverID, preco);
         bt.start();
+    }
+
+    public synchronized void sendComunicacao(DrivingData comunicacao) {
+        dd.add(comunicacao);
+    }
+
+    public boolean temReport() {
+        return dd.isEmpty();
+    }
+
+    public DrivingData pegaComunicacao() {
+        return dd.remove(0);
     }
 
 }
