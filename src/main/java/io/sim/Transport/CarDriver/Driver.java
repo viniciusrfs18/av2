@@ -117,6 +117,10 @@ public class Driver extends Thread {
         bt.start();
     }
 
+    public Car getCar(){
+        return this.car;
+    }
+
      // Método responsável por informar a quantidade de litros que o carro irá abastecer, esta quantidade será definida de acordo com o saldo bancário do motorista, simulando melhor a realidade.
      public double qtdToFuel(double litros, double saldoDisp) { //
         double preco = fs.getPreco();

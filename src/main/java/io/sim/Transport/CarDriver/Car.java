@@ -116,19 +116,14 @@ public class Car extends Vehicle implements Runnable {
             entrada = new DataInputStream(socket.getInputStream());
 			saida = new DataOutputStream(socket.getOutputStream());
 
-			int numBytesMsg;
-			byte[] mensagemEncriptada;
+			// System.out.println(this.idCar + " conectado!!");
 
 			while (!finalizado) {
 				// Recebendo Rota
 				// Manda "aguardando" da primeira vez
-				mensagemEncriptada = Crypto.encripta(criarJSONDrivingData(drivingDataAtual));
-				saida.write(Crypto.encripta(criaJSONTamanhoBytes(mensagemEncriptada.length)));
-				saida.write(mensagemEncriptada);
-
+				saida.writeUTF(criarJSONDrivingData(drivingDataAtual));
 				System.out.println(this.idCar + " aguardando rota");
-				numBytesMsg = extraiTamanhoBytes(Crypto.decripta(entrada.readNBytes(Crypto.getTamNumBytes())));
-                rota = extraiRota(Crypto.decripta(entrada.readNBytes(numBytesMsg)));
+				rota = extraiRota(entrada.readUTF());
 
 				if(rota.getID().equals("-1")) {
 					System.out.println(this.idCar +" - Sem rotas a receber.");
@@ -140,6 +135,7 @@ public class Car extends Vehicle implements Runnable {
 
 				ts = new TransportService(true, this.idCar, rota, this, this.sumo);
 				ts.start();
+				//System.out.println("CAR - TransportService ativo");
 			
 				String edgeFinal = this.getEdgeFinal(); 
 				this.on_off = true;
@@ -162,9 +158,7 @@ public class Car extends Vehicle implements Runnable {
 						System.out.println(this.idCar + " acabou a rota.");
 						//this.ts.setOn_off(false);
 						this.carStatus = "finalizado";
-						mensagemEncriptada = Crypto.encripta(criarJSONDrivingData(drivingDataAtual));
-						saida.write(Crypto.encripta(criaJSONTamanhoBytes(mensagemEncriptada.length)));
-						saida.write(mensagemEncriptada);
+						saida.writeUTF(criarJSONDrivingData(drivingDataAtual));
 						this.on_off = false;
 						break;
 					} 
@@ -203,13 +197,11 @@ public class Car extends Vehicle implements Runnable {
 					this.carStatus = "encerrado";
 				}
 			}
-
 			System.out.println("Encerrando: " + idCar);
 			entrada.close();
 			saida.close();
 			socket.close();
 			this.ts.setTerminado(true);
-			
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -269,7 +261,7 @@ public class Car extends Vehicle implements Runnable {
 				// Criar relat�rio auditoria / alertas
 				// velocidadePermitida = (double)
 				// sumo.do_job_get(Vehicle.getAllowedSpeed(this.idSumoVehicle));
-				//atualizaPlanilhaCar(drivingDataAtual);
+				atualizaPlanilhaCar(drivingDataAtual);
 				this.drivingRepport.add(drivingDataAtual);
 
 				//System.out.println("Data: " + this.drivingRepport.size());
@@ -539,33 +531,6 @@ public class Car extends Vehicle implements Runnable {
 		drivingDataJSON.put("PersonCapacity", drivingData.getPersonCapacity());
 		drivingDataJSON.put("PersonNumber", drivingData.getPersonNumber());
         return drivingDataJSON.toString();
-	}
-
-	private void criaSheet(String carID){
-		String nomeDoArquivo = "carData.xlsx";
-
-		try (Workbook workbook = new XSSFWorkbook();
-            FileOutputStream outputStream = new FileOutputStream(nomeDoArquivo)) {
-			org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet(carID);
-
-            Row headerRow = sheet.createRow(0);
-            headerRow.createCell(0).setCellValue("Timestamp");
-            headerRow.createCell(1).setCellValue("ID Car");
-            headerRow.createCell(2).setCellValue("ID Route");
-            headerRow.createCell(3).setCellValue("Speed");
-            headerRow.createCell(4).setCellValue("Distance");
-			headerRow.createCell(5).setCellValue("FuelConsumption");
-            headerRow.createCell(6).setCellValue("FuelType");
-            headerRow.createCell(7).setCellValue("CO2Emission");
-            headerRow.createCell(8).setCellValue("Longitude (Lon)");
-            headerRow.createCell(9).setCellValue("Latitude (Lat)");
-
-            // Salve a planilha com o cabeçalho
-            workbook.write(outputStream);
-		} catch (Exception e) {
-			
-		} 
-
 	}
 
 	private synchronized void atualizaPlanilhaCar(DrivingData data){

@@ -193,5 +193,3 @@ public class AlphaBank extends Thread {
     }
 
 }
-
-

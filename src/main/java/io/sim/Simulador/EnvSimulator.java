@@ -1,8 +1,13 @@
 package io.sim.Simulador;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
+
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import io.sim.MobilityCompany.Company;
 import io.sim.Pagamentos.AlphaBank;
@@ -39,7 +44,7 @@ public class EnvSimulator extends Thread {
 		portaCompany = 23415;
 		portaAlphaBank = 54321;
 		taxaAquisicao = 500;
-		numDrivers = 100;
+		numDrivers = 5;
 		rotasXML = "data/dados.xml";
 	}
 
@@ -74,7 +79,10 @@ public class EnvSimulator extends Thread {
 			// Roda o metodo join em todos os Drivers, espera todos os drivers terminarem a execução
 			ArrayList<Driver> drivers = driverCreator.criaListaDrivers(numDrivers, fuelStation, taxaAquisicao, sumo, host, portaCompany, portaAlphaBank);
 			
+			criaSheet(drivers);
+
 			for(int i = 0; i < drivers.size(); i++) {
+				
 				drivers.get(i).start();
 				Thread.sleep(500);
 			}
@@ -94,4 +102,61 @@ public class EnvSimulator extends Thread {
 
 		System.out.println("Encerrando EnvSimulator");
     }
+
+	/*
+	private void criaSheet(String carID){
+		String nomeDoArquivo = "carData.xlsx";
+
+		try (Workbook workbook = new XSSFWorkbook();
+            FileOutputStream outputStream = new FileOutputStream(nomeDoArquivo)) {
+			org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet(carID);
+
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Timestamp");
+            headerRow.createCell(1).setCellValue("ID Car");
+            headerRow.createCell(2).setCellValue("ID Route");
+            headerRow.createCell(3).setCellValue("Speed");
+            headerRow.createCell(4).setCellValue("Distance");
+			headerRow.createCell(5).setCellValue("FuelConsumption");
+            headerRow.createCell(6).setCellValue("FuelType");
+            headerRow.createCell(7).setCellValue("CO2Emission");
+            headerRow.createCell(8).setCellValue("Longitude (Lon)");
+            headerRow.createCell(9).setCellValue("Latitude (Lat)");
+		} catch (Exception e) {
+			
+		} 
+
+	}*/
+
+	private void criaSheet(ArrayList<Driver> drivers){
+		String nomeDoArquivo = "carData.xlsx";
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            for (Driver driver : drivers) {
+                org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet(driver.getCar().getIdCar());
+                
+				Row headerRow = sheet.createRow(0);
+				headerRow.createCell(0).setCellValue("Timestamp");
+				headerRow.createCell(1).setCellValue("ID Car");
+				headerRow.createCell(2).setCellValue("ID Route");
+				headerRow.createCell(3).setCellValue("Speed");
+				headerRow.createCell(4).setCellValue("Distance");
+				headerRow.createCell(5).setCellValue("FuelConsumption");
+				headerRow.createCell(6).setCellValue("FuelType");
+				headerRow.createCell(7).setCellValue("CO2Emission");
+				headerRow.createCell(8).setCellValue("Longitude (Lon)");
+				headerRow.createCell(9).setCellValue("Latitude (Lat)");
+            }
+
+            // Salve o arquivo Excel após criar todas as abas de planilha.
+            try (FileOutputStream outputStream = new FileOutputStream(nomeDoArquivo)) {
+                workbook.write(outputStream);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

@@ -7,8 +7,6 @@ import java.net.Socket;
 
 import org.json.JSONObject;
 
-import io.sim.Crypto;
-
 public class BotPayment extends Thread {
     private Socket socket;
     private String pagadorID;
@@ -31,25 +29,18 @@ public class BotPayment extends Thread {
             DataOutputStream output = new DataOutputStream(socket.getOutputStream());
             DataInputStream input = new DataInputStream(socket.getInputStream());
 
-            int numBytesMsg;
-            byte[] mensagemEncriptada;
-
             String[] login = { pagadorID, pagadorSenha };
 
-            mensagemEncriptada = Crypto.encripta(criarJSONLogin(login));
-			output.write(Crypto.encripta(criaJSONTamanhoBytes(mensagemEncriptada.length)));
-			output.write(mensagemEncriptada);
+            output.writeUTF(criarJSONLogin(login));
 
             TransferData td = new TransferData(pagadorID, "Pagamento", recebedorID, valor);
             //System.out.println("!!!!!!!!!! - BP: " + recebedorID + " " + pagadorID);
 
-            mensagemEncriptada = Crypto.encripta(criaJSONTransferData(td));
-			output.write(Crypto.encripta(criaJSONTamanhoBytes(mensagemEncriptada.length)));
-			output.write(mensagemEncriptada);
+            output.writeUTF(criaJSONTransferData(td));
 
             // Aguarde a resposta do servidor AlphaBank
-            numBytesMsg = extraiTamanhoBytes(Crypto.decripta(input.readNBytes(Crypto.getTamNumBytes())));
-            boolean sucesso = extraiResposta(Crypto.decripta(input.readNBytes(numBytesMsg)));
+            String resposta = input.readUTF();
+            boolean sucesso = extraiResposta(resposta);
 
             if (sucesso) {
                 System.out.println("Transferência bem-sucedida!");
@@ -57,8 +48,6 @@ public class BotPayment extends Thread {
                 System.out.println("Transferência falhou.");
             }
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -84,18 +73,4 @@ public class BotPayment extends Thread {
         return resposta.getBoolean("Resposta");
     }
 
-    private String criaJSONTamanhoBytes(int numBytes) {
-        JSONObject my_json = new JSONObject();
-        my_json.put("Num Bytes", numBytes);
-        return my_json.toString();
-    }
-
-    private int extraiTamanhoBytes(String numBytesJSON) {
-        JSONObject my_json = new JSONObject(numBytesJSON);
-        int numBytes = my_json.getInt("Num Bytes");
-        return numBytes;
-    }
-
 }
-
-
