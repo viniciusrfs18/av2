@@ -1,6 +1,5 @@
 package io.sim.Transport.CarDriver;
 
-import io.sim.MobilityCompany.Company;
 import io.sim.Pagamentos.Account;
 import io.sim.Pagamentos.AlphaBank;
 import io.sim.Pagamentos.BotPayment;
@@ -14,26 +13,27 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class Driver extends Thread {
-    // Cliente de AlphaBank
-    private Account account;
-    private Socket socket;
-    private int alphaBankServerPort;
-    private String alphaBankServerHost; 
-    private DataInputStream input;
-    private DataOutputStream output;
     
+    // Cliente de AlphaBank
+    private Account account; // Representa a conta bancária do motorista
+    private Socket socket; // Conexão de socket
+    private int alphaBankServerPort; // Porta do servidor AlphaBank
+    private String alphaBankServerHost; // Endereço do servidor AlphaBank
+    private DataInputStream input; // Fluxo de entrada de dados
+    private DataOutputStream output; // Fluxo de saída de dados
+
     // Atributos da Classe
-    private String driverID;
-    private Car car;
-    private long acquisitionRate;
-    private ArrayList<Rota> rotasDisp = new ArrayList<Rota>();
-    private Rota rotaAtual;
-    private ArrayList<Rota> finishedRoutes = new ArrayList<Rota>();
-    private boolean initRoute = false;
-    private long balanceInicial;
+    private String driverID; // ID único do motorista
+    private Car car; // Representa o veículo associado ao motorista
+    private long acquisitionRate; // Taxa de aquisição de dados
+    private ArrayList<Rota> rotasDisp = new ArrayList<Rota>(); // Lista de rotas disponíveis
+    private Rota rotaAtual; // A rota atual do motorista
+    private ArrayList<Rota> finishedRoutes = new ArrayList<Rota>(); // Lista de rotas concluídas
+    private boolean initRoute = false; // Indica se uma nova rota foi iniciada
+    private long balanceInicial; // Saldo inicial da conta bancária
+    private FuelStation fs; // Estação de abastecimento de combustível associada ao motorista
 
-    private FuelStation fs;
-
+    // Construtor
     public Driver(String _driverID, Car _car, long _acquisitionRate, FuelStation _postoCombustivel, int _alphaBankServerPort, String _alphaBankServerHost) {
         this.driverID = _driverID;
         this.car = _car;
@@ -47,6 +47,7 @@ public class Driver extends Thread {
         this.fs = _postoCombustivel;
     }
 
+    // Sobrescreve o método run da classe Thread
     @Override
     public void run() {
         try {
@@ -54,13 +55,13 @@ public class Driver extends Thread {
             
             socket = new Socket(this.alphaBankServerHost, this.alphaBankServerPort);
             input = new DataInputStream(socket.getInputStream());
-			output = new DataOutputStream(socket.getOutputStream());
+            output = new DataOutputStream(socket.getOutputStream());
 
             this.account = new Account(driverID, 50);
             AlphaBank.addAccount(account);
             account.start();
             
-            System.out.println(driverID + " se conectou ao Servido do AlphaBank!!");
+            System.out.println(driverID + " se conectou ao Servidor do AlphaBank!!");
             
             Thread threadCar = new Thread(this.car);
             threadCar.start();
@@ -79,8 +80,6 @@ public class Driver extends Thread {
                 }
 
                 if (this.car.getNivelDoTanque() < 3){
-                    
-                    //this.car.setSpeed(0);
                     double litros = (10 - this.car.getNivelDoTanque());
                     double qtdFuel = qtdToFuel(litros, this.account.getBalance());
                         
@@ -91,10 +90,10 @@ public class Driver extends Thread {
                             
                         fs.fuelCar(this.car, qtdFuel);
                             
-                        fsPayment(socket, (qtdFuel*fs.getprice()));
+                        fsPayment(socket, (qtdFuel * fs.getprice()));
                         
                     } catch (Exception e) {
-                            e.printStackTrace();
+                        e.printStackTrace();
                     }
                 }
 
@@ -111,7 +110,7 @@ public class Driver extends Thread {
         }
     }
 
-    //Função utilizada para criar o BotPayment responsável por realizar o pagamento do Driver a FuelStation
+    // Função utilizada para criar o BotPayment responsável por realizar o pagamento do Driver à FuelStation
     private void fsPayment(Socket socket, double amount){
         BotPayment bt = new BotPayment(socket, account.getAccountID(), account.getPassword(), "FuelStation", amount);
         bt.start();
@@ -121,8 +120,8 @@ public class Driver extends Thread {
         return this.car;
     }
 
-     // Método responsável por informar a quantidade de litros que o carro irá abastecer, esta quantidade será definida de acordo com o balance bancário do motorista, simulando melhor a realidade.
-     public double qtdToFuel(double litros, double balanceDisp) { //
+    // Método responsável por informar a quantidade de litros que o carro irá abastecer, com base no balance bancário do motorista, simulando a realidade.
+    public double qtdToFuel(double litros, double balanceDisp) { 
         double price = fs.getprice();
         double priceTotal = litros * price;
 
@@ -132,7 +131,7 @@ public class Driver extends Thread {
             double priceReduzindo = priceTotal;
             while (balanceDisp < priceReduzindo) {
                 litros--;
-                priceReduzindo = litros*price;
+                priceReduzindo = litros * price;
                 
                 if (litros <= 0) {
                     return 0;
@@ -149,6 +148,4 @@ public class Driver extends Thread {
     public FuelStation getFuelStation() {
         return this.fs;
     }
-
-
 }
