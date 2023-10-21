@@ -10,7 +10,7 @@
 
 ## Descrição do projeto
 
-Uma Campania possui diversas rotas que precisam ser executadas, dito isso, ela necessita de motoristas que realizem as mesmas. Por este motivo, ela irá os contratá-los pagando a quantia de R$ 3,25 por quilometro rodado - assim como aplicativos como o Uber e similares realizam nos dias de hoje. 
+Uma Compania possui diversas rotas que precisam ser executadas, dito isso, ela necessita de motoristas que realizem as mesmas. Por este motivo, ela irá os contratá-los pagando a quantia de R$ 3,25 por quilometro rodado - assim como aplicativos como o Uber e similares realizam nos dias de hoje. 
 
 Durante o trajeto de cada motorista, diversas situações irão ocorrer:
 
