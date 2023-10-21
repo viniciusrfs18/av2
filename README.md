@@ -35,4 +35,4 @@ Com todas as situações que foram elencadas anteriormente, a importancia dos pa
 
 ## Utilização
 
-Para a utilização do projeto, garanta que sua máquina possui as tecnologias citadas previamente instaladas. Além disso, garanta que o arquivo Pom.xml esteja com todas as suas dependências atualizadas.
+Para a utilização do projeto, garanta que sua máquina _possui as tecnologias citadas previamente instaladas_. Além disso, garanta que o arquivo **Pom.xml** esteja com todas as suas dependências atualizadas.
