@@ -23,7 +23,7 @@ public class atualizaSheet extends Thread{
             while (Company.routesAvaliable()) {
                 Thread.sleep(10);
                 if (!company.temReport()) {
-                    updateSheetCar(company.pegaComunicacao());
+                    updateSheetCar(company.pegacom());
                 }
             }
         } catch (InterruptedException e) {

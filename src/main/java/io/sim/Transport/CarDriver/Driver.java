@@ -28,7 +28,7 @@ public class Driver extends Thread {
     private long acquisitionRate;
     private ArrayList<Rota> rotasDisp = new ArrayList<Rota>();
     private Rota rotaAtual;
-    private ArrayList<Rota> rotasTerminadas = new ArrayList<Rota>();
+    private ArrayList<Rota> finishedRoutes = new ArrayList<Rota>();
     private boolean initRoute = false;
     private long balanceInicial;
 
@@ -40,7 +40,7 @@ public class Driver extends Thread {
         this.acquisitionRate = _acquisitionRate;
         this.rotasDisp = new ArrayList<Rota>();
         rotaAtual = null;
-        this.rotasTerminadas = new ArrayList<Rota>();
+        this.finishedRoutes = new ArrayList<Rota>();
         this.balanceInicial = 10000;
         this.alphaBankServerPort = _alphaBankServerPort;
         this.alphaBankServerHost = _alphaBankServerHost;
@@ -70,7 +70,7 @@ public class Driver extends Thread {
                 
                 if(car.getCarStatus() == "finalizado") {
                     System.out.println(this.driverID + " rota " + this.rotasDisp.get(0).getID() + " finalizada");
-                    rotasTerminadas.add(rotaAtual);
+                    finishedRoutes.add(rotaAtual);
                     initRoute = false;
                 } else if((this.car.getCarStatus() == "rodando") && !initRoute) {
                     System.out.println(this.driverID + " rota "+ this.car.getRota().getID() +" iniciada");
@@ -91,7 +91,7 @@ public class Driver extends Thread {
                             
                         fs.fuelCar(this.car, qtdFuel);
                             
-                        fsPayment(socket, (qtdFuel*fs.getPreco()));
+                        fsPayment(socket, (qtdFuel*fs.getprice()));
                         
                     } catch (Exception e) {
                             e.printStackTrace();
@@ -123,16 +123,16 @@ public class Driver extends Thread {
 
      // Método responsável por informar a quantidade de litros que o carro irá abastecer, esta quantidade será definida de acordo com o balance bancário do motorista, simulando melhor a realidade.
      public double qtdToFuel(double litros, double balanceDisp) { //
-        double preco = fs.getPreco();
-        double precoTotal = litros * preco;
+        double price = fs.getprice();
+        double priceTotal = litros * price;
 
-        if (balanceDisp > precoTotal) {
+        if (balanceDisp > priceTotal) {
             return litros;
         } else {
-            double precoReduzindo = precoTotal;
-            while (balanceDisp < precoReduzindo) {
+            double priceReduzindo = priceTotal;
+            while (balanceDisp < priceReduzindo) {
                 litros--;
-                precoReduzindo = litros*preco;
+                priceReduzindo = litros*price;
                 
                 if (litros <= 0) {
                     return 0;

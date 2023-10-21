@@ -13,7 +13,7 @@ import io.sim.Transport.CarDriver.Car;
 public class FuelStation extends Thread {
     // Atributos da classe
     private Semaphore bombas;
-    private double preco;
+    private double price;
     
     // Atributos como cliente de AlphaBank
     private Socket socket;
@@ -25,7 +25,7 @@ public class FuelStation extends Thread {
 
     public FuelStation(int _alphaBankServerPort, String _alphaBankServerHost) {
         this.bombas = new Semaphore(2); // Duas bombas de combustível disponíveis
-        this.preco = 5.87;
+        this.price = 5.87;
         
         // Atributos como cliente de AlphaBank
         alphaBankServerPort = _alphaBankServerPort;
@@ -64,8 +64,8 @@ public class FuelStation extends Thread {
     }
 
     // Método que retorna o Preço do Litro de Gasolina
-    public double getPreco() { 
-        return this.preco;
+    public double getprice() { 
+        return this.price;
     }
 
 
