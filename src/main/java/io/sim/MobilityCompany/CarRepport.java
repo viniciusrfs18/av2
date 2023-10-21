@@ -18,25 +18,25 @@ import io.sim.Transport.Rotas.Rota;
 
 public class CarRepport extends Thread {
     private Socket carSocket;
-    private DataInputStream entrada;
-    private DataOutputStream saida;
+    private DataInputStream input;
+    private DataOutputStream output;
     private Company company;
 
-    // Atributos para sincronização
-    private Object sincroniza = new Object();
+    // Atributos para syncção
+    private Object sync = new Object();
 
     public CarRepport(Socket _carSocket, Company _company) {
         this.company = _company;
         this.carSocket = _carSocket;
         try {
-            // variaveis de entrada e saida do servidor
-            entrada = new DataInputStream(carSocket.getInputStream());
-            saida = new DataOutputStream(carSocket.getOutputStream());
+            // variaveis de input e output do servidor
+            input = new DataInputStream(carSocket.getInputStream());
+            output = new DataOutputStream(carSocket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        this.sincroniza = new Object();
+        this.sync = new Object();
     }
 
     @Override
@@ -49,7 +49,7 @@ public class CarRepport extends Thread {
             // loop principal
             while(!StatusDoCarro.equals("encerrado")) {
                 
-                DrivingData comunicacao = extraiDrivingData(entrada.readUTF());
+                DrivingData comunicacao = extraiDrivingData(input.readUTF());
                 StatusDoCarro = comunicacao.getCarStatus(); // lê solicitacao do cliente
                 
                 company.sendComunicacao(comunicacao);
@@ -74,14 +74,14 @@ public class CarRepport extends Thread {
                     if(!Company.routesAvaliable()) {
                         System.out.println("SMC - Sem mais rotas para liberar.");
                         Rota rota = new Rota("-1", "00000");
-                        saida.writeUTF(criaJSONRota(rota));
+                        output.writeUTF(criaJSONRota(rota));
                         break;
                     }
 
                     if(Company.routesAvaliable()) {
-                        synchronized (sincroniza) {
-                            Rota resposta = company.executarRota();
-                            saida.writeUTF(criaJSONRota(resposta));
+                        synchronized (sync) {
+                            Rota response = company.executarRota();
+                            output.writeUTF(criaJSONRota(response));
                         }
                     }
                 
@@ -100,8 +100,8 @@ public class CarRepport extends Thread {
             }
 
             System.out.println("Encerrando canal.");
-            entrada.close();
-            saida.close();
+            input.close();
+            output.close();
             carSocket.close();
         } catch (IOException e) {
             e.printStackTrace();

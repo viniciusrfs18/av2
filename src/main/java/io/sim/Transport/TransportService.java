@@ -47,42 +47,6 @@ public class TransportService extends Thread {
 			e.printStackTrace();
 		}
 
-		// // Loop principal
-		// while(!terminado) {
-		// 	try {
-		// 		if(this.on_off) {
-		// 			System.out.println("TS - on");
-		// 			while (this.on_off) {
-		// 				if(!this.sumoInit) {
-		// 					System.out.println("TS - entrou na criacao");
-		// 					this.initializeRoutes();
-		// 					System.out.println("TS - Rota: " + edge + " adcionada!");
-		// 					String edgeFinal = edge.get(edge.size()-1);
-		// 					System.out.println("TS - Edge final: "+edgeFinal);
-							
-		// 				}
-
-		// 				if (this.getSumo().isClosed()) {
-		// 					this.on_off = false;
-		// 					this.sumoReady = false;
-		// 					System.out.println("TS - SUMO is closed...");
-		// 				}
-
-		// 				try {
-		// 					this.sumo.do_timestep();
-		// 				} catch (Exception e) {
-		// 					e.printStackTrace();
-		// 				}
-		// 				Thread.sleep(this.car.getAcquisitionRate());
-		// 			}
-		// 			sumoInit = false;
-		// 			sumoReady = false;
-		// 		}
-
-		// 	} catch (Exception e) {
-		// 		e.printStackTrace();
-		// 	}
-		// }
 
 		System.out.println("Encerrando TransportService.");
 	}

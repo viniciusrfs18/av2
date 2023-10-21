@@ -4,22 +4,22 @@ import java.io.DataOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
-
 import org.json.JSONObject;
 
 public class BotPayment extends Thread {
     private Socket socket;
-    private String pagadorID;
-    private String pagadorSenha;
-    private String recebedorID;
-    private double valor;
+    private String payerID;
+    private String payerPassword;
+    private String receiverID;
+    private double amount;
 
-    public BotPayment(Socket _socket, String _pagadorID, String _pagadorSenha, String _recebedorID, double _valor) {
+    // Construtor para inicializar o objeto BotPayment
+    public BotPayment(Socket _socket, String _payerID, String _payerPassword, String _receiverID, double _amount) {
         this.socket = _socket;
-        this.pagadorID = _pagadorID;
-        this.pagadorSenha = _pagadorSenha;
-        this.recebedorID = _recebedorID;
-        this.valor = _valor;
+        this.payerID = _payerID;
+        this.payerPassword = _payerPassword;
+        this.receiverID = _receiverID;
+        this.amount = _amount;
     }
 
     @Override
@@ -29,20 +29,21 @@ public class BotPayment extends Thread {
             DataOutputStream output = new DataOutputStream(socket.getOutputStream());
             DataInputStream input = new DataInputStream(socket.getInputStream());
 
-            String[] login = { pagadorID, pagadorSenha };
+            String[] login = { payerID, payerPassword };
 
-            output.writeUTF(criarJSONLogin(login));
+            // Envia informações de login para o servidor AlphaBank
+            output.writeUTF(loginJSON(login));
 
-            TransferData td = new TransferData(pagadorID, "Pagamento", recebedorID, valor);
-            //System.out.println("!!!!!!!!!! - BP: " + recebedorID + " " + pagadorID);
+            TransferData td = new TransferData(payerID, "Pagamento", receiverID, amount);
 
-            output.writeUTF(criaJSONTransferData(td));
+            // Envia informações de transferência para o servidor AlphaBank
+            output.writeUTF(transferDataJSON(td));
 
-            // Aguarde a resposta do servidor AlphaBank
-            String resposta = input.readUTF();
-            boolean sucesso = extraiResposta(resposta);
+            // Aguarda a resposta do servidor AlphaBank
+            String response = input.readUTF();
+            boolean success = extractResponse(response);
 
-            if (sucesso) {
+            if (success) {
                 System.out.println("Transferência bem-sucedida!");
             } else {
                 System.out.println("Transferência falhou.");
@@ -52,25 +53,27 @@ public class BotPayment extends Thread {
         }
     }
 
-    private String criaJSONTransferData(TransferData transferData) {
+    // Método para transformar informações de transferência em formato JSON
+    private String transferDataJSON(TransferData transferData) {
         JSONObject transferDataJSON = new JSONObject();
-		transferDataJSON.put("ID do Pagador", transferData.getPagador());
-        transferDataJSON.put("Operacao", transferData.getOperacao());
-        transferDataJSON.put("ID do Recebedor", transferData.getRecebedor());
-		transferDataJSON.put("valor", transferData.getvalor());
+        transferDataJSON.put("payerID", transferData.getpayer());
+        transferDataJSON.put("operation", transferData.getoperation());
+        transferDataJSON.put("receiverID", transferData.getreceiver());
+        transferDataJSON.put("amount", transferData.getamount());
         return transferDataJSON.toString();
-	}
-
-    private String criarJSONLogin(String[] login) {
-        JSONObject loginJSONObj = new JSONObject();
-        loginJSONObj.put("ID do Pagador", login[0]);
-		loginJSONObj.put("Senha do Pagador", login[1]);
-        return loginJSONObj.toString();
     }
 
-    private boolean extraiResposta(String respostaJSON) {
-        JSONObject resposta = new JSONObject(respostaJSON);
-        return resposta.getBoolean("Resposta");
+    // Método para transformar informações de login em formato JSON
+    private String loginJSON(String[] login) {
+        JSONObject json = new JSONObject();
+        json.put("payerID", login[0]);
+        json.put("payerPassword", login[1]);
+        return json.toString();
     }
 
+    // Método para extrair a resposta do formato JSON
+    private boolean extractResponse(String responseJSON) {
+        JSONObject response = new JSONObject(responseJSON);
+        return response.getBoolean("response");
+    }
 }

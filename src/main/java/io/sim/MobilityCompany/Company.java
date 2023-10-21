@@ -27,8 +27,8 @@ public class Company extends Thread {
     // Atributos de Servidor
     private ServerSocket serverSocket;
 
-    // Atributos para sincronização
-    private static Object sincroniza;
+    // Atributos para syncção
+    private static Object sync;
     private static boolean rotasDisponiveis;
     private boolean conectandoCars;
 
@@ -36,7 +36,7 @@ public class Company extends Thread {
     private ArrayList<Rota> rotasDisp;
     private ArrayList<Rota> rotasEmExec;
     private ArrayList<Rota> rotasTerminadas;
-    private static double preco;
+    private double preco;
     private static int numDrivers;
     private static ArrayList<DrivingData> dd;
 
@@ -45,22 +45,22 @@ public class Company extends Thread {
     private Account account;
     private int alphaBankServerPort;
     private String alphaBankServerHost; 
-    private DataInputStream entrada;
-    private DataOutputStream saida;
+    private DataInputStream input;
+    private DataOutputStream output;
     
     public Company(ServerSocket serverSocket, ArrayList<Rota> rotas, int _numDrivers, int _alphaBankServerPort, String _alphaBankServerHost) {
         
         // Inicializa servidor
         this.serverSocket = serverSocket;
 
-        // Inicializa atributos de sincronização
-        sincroniza = new Object();
+        // Inicializa atributos de syncção
+        sync = new Object();
         rotasDisponiveis = true;
         this.conectandoCars = true;
 
         // Atributos da classe
         this.rotasDisp = rotas;
-		System.out.println("Rotas: "+ rotasDisp.size()+" rotas disponiveis");
+		//System.out.println("Rotas: "+ rotasDisp.size()+" rotas disponiveis");
         rotasEmExec = new ArrayList<Rota>();
         rotasTerminadas = new ArrayList<Rota>();
         preco = 3.25;
@@ -79,8 +79,8 @@ public class Company extends Thread {
             System.out.println("Company iniciando...");
 
             socket = new Socket(this.alphaBankServerHost, this.alphaBankServerPort);
-            entrada = new DataInputStream(socket.getInputStream());
-			saida = new DataOutputStream(socket.getOutputStream());
+            input = new DataInputStream(socket.getInputStream());
+			output = new DataOutputStream(socket.getOutputStream());
             
             this.account = new Account("Company", 100000);
             AlphaBank.addAccount(account);
@@ -127,7 +127,7 @@ public class Company extends Thread {
                     conectandoCars = false;
                 }
 
-                System.out.println(account.getAccountID() + " tem R$" + account.getSaldo() + " de saldo");
+                System.out.println(account.getAccountID() + " tem R$" + account.getBalance() + " de balance");
             }
         }
         catch (IOException e) {
@@ -141,10 +141,14 @@ public class Company extends Thread {
         return rotasDisponiveis;
     }
 
+    public boolean rotasDispVazio(){
+        return (rotasEmExec.isEmpty());
+    }
+
     // Método responsável por verificar se o carro passado ainda existe no SUMO, ele deve existir pois o simulador estava apresentando problemas 
     // para mudar as rotas dos veículos uma vez que a Thread de algum deles deixa de existir.
     public static boolean stillOnSUMO(String _idCar, SumoTraciConnection _sumo) {
-        synchronized(sincroniza){
+        synchronized(sync){
             try {
                 SumoStringList lista;
                 lista = (SumoStringList) _sumo.do_job_get(Vehicle.getIDList());
@@ -158,7 +162,7 @@ public class Company extends Thread {
 
     // Libera uma rota para o cliente que a solicitou. Para isso, remove de "rotasDisp" e adiciona em "rotasEmExec"
     public Rota executarRota() {
-        synchronized (sincroniza) {
+        synchronized (sync) {
             Rota rota = rotasDisp.remove(0);
             rotasEmExec.add(rota);
             return rota;
@@ -167,7 +171,7 @@ public class Company extends Thread {
 
     // Método responsável por adicionar a rota terminada ao ArrayList de Rotas Finalizadas
     public void terminarRota(String _routeID) {
-        synchronized (sincroniza) {
+        synchronized (sync) {
             System.out.println("Arquivando rota: " + _routeID);
             int i = 0;
             while (!rotasEmExec.get(i).getID().equals(_routeID)) {
@@ -179,7 +183,7 @@ public class Company extends Thread {
 
     // Método responsável por criar o BotPayment que realizará o pagamento por 1Km percorrido ao motorista.
     public void oneKmPay(String driverID) throws IOException {
-        BotPayment bt = new BotPayment(socket, "Company",  account.getSenha(), driverID, preco);
+        BotPayment bt = new BotPayment(socket, "Company",  account.getPassword(), driverID, preco);
         bt.start();
     }
 
@@ -193,6 +197,10 @@ public class Company extends Thread {
 
     public DrivingData pegaComunicacao() {
         return dd.remove(0);
+    }
+
+    public double getPreco(){
+        return this.preco;
     }
 
 }

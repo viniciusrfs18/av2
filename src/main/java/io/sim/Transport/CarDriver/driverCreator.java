@@ -22,7 +22,7 @@ public class driverCreator {
     public static int personCapacity = 1;
     public static int personNumber = 1;
 
-    public static ArrayList<Driver> criaListaDrivers(int qtdDrivers, FuelStation fuelStation, long taxaAquisicao, SumoTraciConnection sumo, String host, int portaCompanny, int portaAlphaBank) throws Exception {
+    public static ArrayList<Driver> criaListaDrivers(int qtdDrivers, FuelStation fuelStation, long acquisitionRate, SumoTraciConnection sumo, String host, int portaCompanny, int portaAlphaBank) throws Exception {
         
         ArrayList<Driver> drivers = new ArrayList<>(); // Cria e inicializa um ArrayList de Drivers
         SumoColor cor = new SumoColor(0, 255, 0, 126); // Cria e Inicializa a cor Verde
@@ -32,9 +32,9 @@ public class driverCreator {
             String driverID = "Driver" + (i + 1);
             String carID = "Car" + (i + 1);
 
-            Car car = new Car(on_off, carID, cor, driverID, sumo, taxaAquisicao, fuelType, fuelPreferential, fuelPrice, personCapacity, personNumber, host, portaCompanny);
+            Car car = new Car(on_off, carID, cor, driverID, sumo, acquisitionRate, fuelType, fuelPreferential, fuelPrice, personCapacity, personNumber, host, portaCompanny);
 
-            Driver driver = new Driver(driverID, car, taxaAquisicao, fuelStation, portaAlphaBank, host);
+            Driver driver = new Driver(driverID, car, acquisitionRate, fuelStation, portaAlphaBank, host);
             drivers.add(driver);
             
         }

@@ -23,7 +23,7 @@ public class atualizaSheet extends Thread{
             while (Company.routesAvaliable()) {
                 Thread.sleep(10);
                 if (!company.temReport()) {
-                    atualizaPlanilhaCar(company.pegaComunicacao());
+                    updateSheetCar(company.pegaComunicacao());
                 }
             }
         } catch (InterruptedException e) {
@@ -31,7 +31,7 @@ public class atualizaSheet extends Thread{
         }
     }
 
-    private synchronized void atualizaPlanilhaCar(DrivingData data){
+    private synchronized void updateSheetCar(DrivingData data){
         
         String nomeDoArquivo = "carData.xlsx";
 

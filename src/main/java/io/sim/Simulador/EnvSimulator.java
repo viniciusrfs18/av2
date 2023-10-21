@@ -27,11 +27,12 @@ public class EnvSimulator extends Thread {
 	private static int portaSUMO; // NEWF
 	private static int portaCompany;
 	private static int portaAlphaBank;
-	private static long taxaAquisicao;
+	private static long acquisitionRate;
 	private static int numDrivers;
 	private static String rotasXML;
 
     public EnvSimulator() {
+		
 		/* SUMO */
 		String sumo_bin = "sumo-gui";		
 		String config_file = "map/map.sumo.cfg";
@@ -39,34 +40,41 @@ public class EnvSimulator extends Thread {
 		// Sumo connection
 		this.sumo = new SumoTraciConnection(sumo_bin, config_file);
 		
+		// Variáveis recorrentes
 		host = "localhost";
 		portaSUMO = 12345;
 		portaCompany = 23415;
 		portaAlphaBank = 54321;
-		taxaAquisicao = 500;
+		acquisitionRate = 500;
 		numDrivers = 10;
 		rotasXML = "map/map.rou.alt.xml";
+	
 	}
 
     public void run() {
+
 		// Start e configurações inicias do SUMO
 		sumo.addOption("start", "1"); // auto-run on GUI show
 		sumo.addOption("quit-on-end", "1"); // auto-close on end
 
 		try {
 
-			sumo.runServer(portaSUMO); // porta servidor SUMO
-			System.out.println("SUMO conectado.");
-			Thread.sleep(5000);
+			sumo.runServer(portaSUMO); // Roda o Servidor do Sumo
+
+			System.out.println("Servidor do SUMO conectado.");
 			
-			ExecutaSimulador execSimulador = new ExecutaSimulador(this.sumo, taxaAquisicao);
+			Thread.sleep(5000); // Espera 5s para continuar
+			
+			// Inicia a classe responsável por melhorar a conexão com o servidor
+			ExecutaSimulador execSimulador = new ExecutaSimulador(this.sumo, acquisitionRate);
 			execSimulador.start();
 
+			// Cria e Inicia um objeto da Classe AlphaBank
 			ServerSocket alphaBankServer = new ServerSocket(portaAlphaBank);
 			AlphaBank alphaBank = new AlphaBank(alphaBankServer);
 			alphaBank.start();
 
-			Thread.sleep(2000);
+			Thread.sleep(2000); // Espera 2s para continuar
 
 			FuelStation fuelStation = new FuelStation(portaAlphaBank, host);
 			fuelStation.start();
@@ -77,12 +85,11 @@ public class EnvSimulator extends Thread {
 			company.start();
 
 			// Roda o metodo join em todos os Drivers, espera todos os drivers terminarem a execução
-			ArrayList<Driver> drivers = driverCreator.criaListaDrivers(numDrivers, fuelStation, taxaAquisicao, sumo, host, portaCompany, portaAlphaBank);
+			ArrayList<Driver> drivers = driverCreator.criaListaDrivers(numDrivers, fuelStation, acquisitionRate, sumo, host, portaCompany, portaAlphaBank);
 			
 			criaSheet(drivers);
 
 			for(int i = 0; i < drivers.size(); i++) {
-				
 				drivers.get(i).start();
 				Thread.sleep(500);
 			}
@@ -92,6 +99,7 @@ public class EnvSimulator extends Thread {
 			}
 
 			companyServer.close();
+
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		} catch (InterruptedException e) {
@@ -100,9 +108,11 @@ public class EnvSimulator extends Thread {
 			e.printStackTrace();
 		}
 
-		System.out.println("Encerrando EnvSimulator");
+		System.out.println("Encerrando o EnvSimulator");
     }
 
+	// Método responsável pela criação da Planilha que irá conter os dados dos Motoristas,
+	// Cria uma Sheet para cada Driver criado
 	private void criaSheet(ArrayList<Driver> drivers){
 		String nomeDoArquivo = "carData.xlsx";
 
@@ -123,12 +133,13 @@ public class EnvSimulator extends Thread {
 				headerRow.createCell(9).setCellValue("Latitude (Lat)");
             }
 
-            // Salve o arquivo Excel após criar todas as abas de planilha.
+            // Salva o arquivo .xlsx após criar todas as abas de planilha.
             try (FileOutputStream outputStream = new FileOutputStream(nomeDoArquivo)) {
                 workbook.write(outputStream);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }

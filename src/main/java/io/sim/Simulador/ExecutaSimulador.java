@@ -4,11 +4,11 @@ import it.polito.appeal.traci.SumoTraciConnection;
 
 public class ExecutaSimulador extends Thread {
     private SumoTraciConnection sumo;
-    private long taxaAquisicao;
+    private long acquisitionRate;
 
-    public ExecutaSimulador(SumoTraciConnection _sumo, long _taxaAquisicao) {
+    public ExecutaSimulador(SumoTraciConnection _sumo, long _acquisitionRate) {
         this.sumo = _sumo;
-        this.taxaAquisicao = _taxaAquisicao;
+        this.acquisitionRate = _acquisitionRate;
     }
 
     @Override
@@ -18,9 +18,8 @@ public class ExecutaSimulador extends Thread {
         {
             try {
                 this.sumo.do_timestep();
-                sleep(taxaAquisicao);
+                sleep(acquisitionRate);
             } catch (Exception e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
                 break;
             }
