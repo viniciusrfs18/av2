@@ -142,4 +142,13 @@ public class Driver extends Thread {
         }
     }
 
+    public String getDriverId() {
+        return this.driverID;
+    }
+
+    public FuelStation getFuelStation() {
+        return this.fs;
+    }
+
+
 }

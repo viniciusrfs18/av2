@@ -36,7 +36,7 @@ public class Company extends Thread {
     private ArrayList<Rota> rotasDisp;
     private ArrayList<Rota> rotasEmExec;
     private ArrayList<Rota> rotasTerminadas;
-    private static double preco;
+    private double preco;
     private static int numDrivers;
     private static ArrayList<DrivingData> dd;
 
@@ -60,7 +60,7 @@ public class Company extends Thread {
 
         // Atributos da classe
         this.rotasDisp = rotas;
-		System.out.println("Rotas: "+ rotasDisp.size()+" rotas disponiveis");
+		//System.out.println("Rotas: "+ rotasDisp.size()+" rotas disponiveis");
         rotasEmExec = new ArrayList<Rota>();
         rotasTerminadas = new ArrayList<Rota>();
         preco = 3.25;
@@ -141,6 +141,10 @@ public class Company extends Thread {
         return rotasDisponiveis;
     }
 
+    public boolean rotasDispVazio(){
+        return (rotasEmExec.isEmpty());
+    }
+
     // Método responsável por verificar se o carro passado ainda existe no SUMO, ele deve existir pois o simulador estava apresentando problemas 
     // para mudar as rotas dos veículos uma vez que a Thread de algum deles deixa de existir.
     public static boolean stillOnSUMO(String _idCar, SumoTraciConnection _sumo) {
@@ -193,6 +197,10 @@ public class Company extends Thread {
 
     public DrivingData pegaComunicacao() {
         return dd.remove(0);
+    }
+
+    public double getPreco(){
+        return this.preco;
     }
 
 }
