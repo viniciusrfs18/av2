@@ -2,10 +2,11 @@
 
 
 **Aluno:** Diogo Nunes Carvalho - 202010207
-
 **E-mail:** diogo.carvalho2@estudante.ufla.br
 
-![General-Representation](https://github.com/diogonunescarv/Aut-Avancada/assets/74015980/d2d0c840-5dd8-42fd-9d27-88fc3d07aa66)
+<p align="center">
+  <img src="http://some_place.com/image.png](https://github.com/diogonunescarv/Aut-Avancada/assets/74015980/d2d0c840-5dd8-42fd-9d27-88fc3d07aa66)" />
+</p>
 
 ## Descrição do projeto
 
