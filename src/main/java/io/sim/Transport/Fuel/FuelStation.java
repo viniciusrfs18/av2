@@ -20,8 +20,8 @@ public class FuelStation extends Thread {
     private Account account;
     private int alphaBankServerPort;
     private String alphaBankServerHost; 
-    private DataInputStream entrada;
-    private DataOutputStream saida;
+    private DataInputStream input;
+    private DataOutputStream output;
 
     public FuelStation(int _alphaBankServerPort, String _alphaBankServerHost) {
         this.bombas = new Semaphore(2); // Duas bombas de combustível disponíveis
@@ -40,10 +40,10 @@ public class FuelStation extends Thread {
             System.out.println("Fuel Station iniciando..."); // Mensagem para verificar que a FuelStation iniciou
 
             socket = new Socket(this.alphaBankServerHost, this.alphaBankServerPort); // cria um socket 
-            entrada = new DataInputStream(socket.getInputStream()); // inicia um canal para receber a entrada de dados
-            saida = new DataOutputStream(socket.getOutputStream()); // inicia um canal para receber a saída de dados
+            input = new DataInputStream(socket.getInputStream()); // inicia um canal para receber a input de dados
+            output = new DataOutputStream(socket.getOutputStream()); // inicia um canal para receber a saída de dados
 
-            this.account = new Account("FuelStation", 0); // cria a conta bancária para o FuelStation com o saldo zerado
+            this.account = new Account("FuelStation", 0); // cria a conta bancária para o FuelStation com o balance zerado
             
             AlphaBank.addAccount(account); // Por meio do método estático da classe AlphaBank a conta criada para a FuelStation é adicionada ao array de contas do AlphaBank
             account.start(); // Inicia a Thread da conta criada para a FuelStation

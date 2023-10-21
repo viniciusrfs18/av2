@@ -6,38 +6,37 @@ import java.util.Random;
 public class Account extends Thread {
     
     // Atributos da classe
-    private String accountID;
-    private String senha;
-    private double saldo;
-    private ArrayList<TransferData> historico;
+    private String accountID;         // Identificação da conta
+    private String password;          // Senha da conta
+    private double balance;           // Saldo da conta
+    private ArrayList<TransferData> transactionHistory; // Histórico de transações da conta
 
     // Atributos de sincronização
-    private Object sincroniza;
+    private Object sync;              // Objeto de sincronização para operações concorrentes
 
-    //Construtor da classe Account
-    public Account(String _accountID, double _saldo) {
+    // Construtor da classe Account
+    public Account(String _accountID, double _balance) {
         
-        this.accountID = _accountID; //Recebe um ID
-        this.senha = criaSenha(); // Recebe uma Senha
-        this.saldo = _saldo; // Recebe um Saldo Inicial
+        this.accountID = _accountID;  // Inicializa o ID da conta
+        this.password = createPassword();  // Cria e atribui uma senha aleatória
+        this.balance = _balance;    // Inicializa o saldo da conta
 
-        this.historico = new ArrayList<TransferData>();
-        this.sincroniza = new Object();
-    
+        this.transactionHistory = new ArrayList<TransferData>();  // Inicializa o histórico de transações
+        this.sync = new Object();    // Inicializa o objeto de sincronização
     }
 
     @Override
     public void run() {
         
-        System.out.println("Account: " + accountID + " iniciando...");
-        // Sempre que tiver uma operação withdraw ou deposit criar uma transaction e guardar
+        // Sempre que houver uma operação de retirada (withdraw) ou depósito (deposit),
+        // cria um registro de transação e armazena-o no histórico.
         try {
             while (true) {
-                if (AlphaBank.numeroDeRegistrosPend() != 0) {
+                if (AlphaBank.pendingRecords() != 0) {
                     Thread.sleep(500);
-                    TransferData register = AlphaBank.pegarRegistro(accountID);
+                    TransferData register = AlphaBank.getRecord(accountID);
                     if (register != null) {
-                        historico.add(register);
+                        transactionHistory.add(register);
                         System.out.println(register.getDescricao());
                     }
                 }
@@ -45,44 +44,47 @@ public class Account extends Thread {
         } catch (InterruptedException e) {
                 e.printStackTrace();
         }
-        
     }
 
+    // Método para obter o ID da conta
     public String getAccountID() {
         return accountID;
     }
 
-    public String getSenha() {
-        return senha;
+    // Método para obter a senha da conta
+    public String getPassword() {
+        return password;
     }
 
-    public double getSaldo() {
-        synchronized (sincroniza) {
-            return saldo;
+    // Método para obter o saldo da conta
+    public double getBalance() {
+        synchronized (sync) {
+            return balance;
         }
     }
 
-    public void setBalance(double _saldo) {
-        this.saldo = _saldo;
+    // Método para definir o saldo da conta
+    public void setBalance(double _balance) {
+        this.balance = _balance;
     }
 
-    public void deposito(double valor) {
-        synchronized (sincroniza) {
-            System.out.println("CHEGOU DEPOSITO");
-            if (valor > 0) {
-                saldo += valor;
+    // Método para depositar dinheiro na conta
+    public void deposit(double amount) {
+        synchronized (sync) {
+            if (amount > 0) {
+                balance += amount;
             } else {
                 System.out.println("O valor do depósito deve ser positivo.");
             }
         }
     }
 
-    public void saque(double valor) {
-        synchronized (sincroniza) {
-            System.out.println("CHEGOU SAQUE");
-            if (valor > 0) {
-                if (saldo >= valor) {
-                    saldo -= valor;
+    // Método para retirar dinheiro da conta
+    public void withdraw(double amount) {
+        synchronized (sync) {
+            if (amount > 0) {
+                if (balance >= amount) {
+                    balance -= amount;
                 } else {
                     System.out.println("Saldo insuficiente para efetuar o saque.");
                 }
@@ -92,18 +94,19 @@ public class Account extends Thread {
         }
     }
 
-    private String criaSenha(){
+    // Método para criar uma senha aleatória de 6 dígitos
+    private String createPassword(){
         Random random = new Random();
-        StringBuilder senha = new StringBuilder();
+        StringBuilder password = new StringBuilder();
     
         for (int i = 0; i < 6; i++) {
             int randomDigit = random.nextInt(10); // Gera um dígito aleatório de 0 a 9
-            senha.append(randomDigit);
+            password.append(randomDigit);
         }
     
-        return senha.toString();
+        return password.toString();
     }
-
 }
+
 
 

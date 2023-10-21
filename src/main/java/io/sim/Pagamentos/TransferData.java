@@ -4,72 +4,68 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Timestamp;
-
-import org.apache.poi.sl.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 
 public class TransferData {
-    private String accountID;
-    private String pagador;
-    private String operacao;
-    private String recebedor;
-    private double valor;
-    private Timestamp timestamp;
+    private String accountID;   // ID da conta associada à transferência
+    private String payer;       // Pagador
+    private String operation;   // Tipo de operação (Pagamento ou Recebimento)
+    private String receiver;    // Recebedor
+    private double amount;      // Valor da transferência
+    private Timestamp timestamp; // Timestamp para registrar o momento da transferência
 
-    public TransferData(String _pagador, String _operacao, String _recebedor, double _valor) {
-        this.pagador = _pagador;
-        this.operacao = _operacao;
-        this.recebedor = _recebedor;
-        this.valor = _valor;
-        atualizaPlanilha();
+    public TransferData(String _payer, String _operation, String _receiver, double _amount) {
+        this.payer = _payer;       // Inicializa o pagador
+        this.operation = _operation; // Inicializa o tipo de operação
+        this.receiver = _receiver;   // Inicializa o recebedor
+        this.amount = _amount;       // Inicializa o valor da transferência
+        updateSheet();               // Chama o método para atualizar a planilha Excel
     }
 
     public void setAccountID(String _accoutID) {
-        accountID = _accoutID;
+        accountID = _accoutID; // Define o ID da conta associada à transferência
     }
 
     public String getAccountID() {
-        return accountID;
+        return accountID; // Obtém o ID da conta associada à transferência
     }
 
-    public String getPagador() {
-        return this.pagador;
+    public String getpayer() {
+        return this.payer; // Obtém o pagador
     }
 
-    public String getOperacao() {
-        return this.operacao;
+    public String getoperation() {
+        return this.operation; // Obtém o tipo de operação
     }
 
-    public String getRecebedor() {
-        return this.recebedor;
+    public String getreceiver() {
+        return this.receiver; // Obtém o recebedor
     }
 
-    public double getvalor() {
-        return this.valor;
+    public double getamount() {
+        return this.amount; // Obtém o valor da transferência
     }
 
     public void setTimestamp() {
-        timestamp = new Timestamp(System.currentTimeMillis());
+        timestamp = new Timestamp(System.currentTimeMillis()); // Define o timestamp como o momento atual
     }
 
     public Timestamp getTimestamp() {
-        return timestamp;
+        return timestamp; // Obtém o timestamp
     }
 
     public String getDescricao() {
         String descricao = "";
-        if (operacao.equals("Pagamento")) {
-            descricao = pagador + " transferiu R$" + valor + " para " + recebedor;
-        } else if (operacao.equals("Recebimento")) {
-            descricao = recebedor + " recebeu R$" + valor + " de " + pagador;
+        if (operation.equals("Pagamento")) {
+            descricao = payer + " transferiu R$" + amount + " para " + receiver; // Descrição para operação de pagamento
+        } else if (operation.equals("Recebimento")) {
+            descricao = receiver + " recebeu R$" + amount + " de " + payer; // Descrição para operação de recebimento
         }
 
-        return descricao;
+        return descricao; // Retorna a descrição da transferência
     }
 
-    private void atualizaPlanilha(){
+    private void updateSheet() {
         
         String nomeDoArquivo = "transacoes.xlsx";
 
@@ -82,17 +78,15 @@ public class TransferData {
         int lastRowNum = sheet.getLastRowNum();
         Row newRow = sheet.createRow(lastRowNum + 1);
 
-            // Preencha as células da nova linha com os dados da classe TransferData
+        // Preenche as células da nova linha com os dados da classe TransferData
         newRow.createCell(0).setCellValue(getAccountID());
-        newRow.createCell(1).setCellValue(getPagador());
-        newRow.createCell(2).setCellValue(getOperacao());
-        newRow.createCell(3).setCellValue(getRecebedor());
-        newRow.createCell(4).setCellValue(getvalor());
+        newRow.createCell(1).setCellValue(getpayer());
+        newRow.createCell(2).setCellValue(getoperation());
+        newRow.createCell(3).setCellValue(getreceiver());
+        newRow.createCell(4).setCellValue(getamount());
         
-        // Salve as alterações na planilha
+        // Salva as alterações na planilha
         workbook.write(outputStream);
-
-        System.out.println("Dados adicionados com sucesso!");
         
         } catch (IOException e) {
             e.printStackTrace();

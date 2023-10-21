@@ -19,7 +19,7 @@ public class FuelStationTest {
 
     @Test
     public void testGetPreco() {
-        double expectedPreco = 5.87; // Substitua pelo valor esperado do preço do litro de gasolina.
+        double expectedPreco = 5.87; // Substitua pelo amount esperado do preço do litro de gasolina.
         double actualPreco = fuelStation.getPreco();
 
         assertEquals(expectedPreco, actualPreco, 0.01); // Use uma margem de erro de 0.01 para lidar com a precisão de ponto flutuante.

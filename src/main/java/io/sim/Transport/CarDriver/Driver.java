@@ -19,29 +19,29 @@ public class Driver extends Thread {
     private Socket socket;
     private int alphaBankServerPort;
     private String alphaBankServerHost; 
-    private DataInputStream entrada;
-    private DataOutputStream saida;
+    private DataInputStream input;
+    private DataOutputStream output;
     
     // Atributos da Classe
     private String driverID;
     private Car car;
-    private long taxaAquisicao;
+    private long acquisitionRate;
     private ArrayList<Rota> rotasDisp = new ArrayList<Rota>();
     private Rota rotaAtual;
     private ArrayList<Rota> rotasTerminadas = new ArrayList<Rota>();
     private boolean initRoute = false;
-    private long saldoInicial;
+    private long balanceInicial;
 
     private FuelStation fs;
 
-    public Driver(String _driverID, Car _car, long _taxaAquisicao, FuelStation _postoCombustivel, int _alphaBankServerPort, String _alphaBankServerHost) {
+    public Driver(String _driverID, Car _car, long _acquisitionRate, FuelStation _postoCombustivel, int _alphaBankServerPort, String _alphaBankServerHost) {
         this.driverID = _driverID;
         this.car = _car;
-        this.taxaAquisicao = _taxaAquisicao;
+        this.acquisitionRate = _acquisitionRate;
         this.rotasDisp = new ArrayList<Rota>();
         rotaAtual = null;
         this.rotasTerminadas = new ArrayList<Rota>();
-        this.saldoInicial = 10000;
+        this.balanceInicial = 10000;
         this.alphaBankServerPort = _alphaBankServerPort;
         this.alphaBankServerHost = _alphaBankServerHost;
         this.fs = _postoCombustivel;
@@ -53,8 +53,8 @@ public class Driver extends Thread {
             System.out.println("Iniciando " + this.driverID);
             
             socket = new Socket(this.alphaBankServerHost, this.alphaBankServerPort);
-            entrada = new DataInputStream(socket.getInputStream());
-			saida = new DataOutputStream(socket.getOutputStream());
+            input = new DataInputStream(socket.getInputStream());
+			output = new DataOutputStream(socket.getOutputStream());
 
             this.account = new Account(driverID, 50);
             AlphaBank.addAccount(account);
@@ -82,7 +82,7 @@ public class Driver extends Thread {
                     
                     //this.car.setSpeed(0);
                     double litros = (10 - this.car.getNivelDoTanque());
-                    double qtdFuel = qtdToFuel(litros, this.account.getSaldo());
+                    double qtdFuel = qtdToFuel(litros, this.account.getBalance());
                         
                     try {
                         System.out.println(driverID + " decidiu abastecer " + qtdFuel);
@@ -98,7 +98,7 @@ public class Driver extends Thread {
                     }
                 }
 
-                System.out.println(account.getAccountID() + " tem R$" + account.getSaldo() + " de saldo");
+                System.out.println(account.getAccountID() + " tem R$" + account.getBalance() + " de balance");
             }
             
             car.setFinalizado(true);  
@@ -112,8 +112,8 @@ public class Driver extends Thread {
     }
 
     //Função utilizada para criar o BotPayment responsável por realizar o pagamento do Driver a FuelStation
-    private void fsPayment(Socket socket, double valor){
-        BotPayment bt = new BotPayment(socket, account.getAccountID(), account.getSenha(), "FuelStation", valor);
+    private void fsPayment(Socket socket, double amount){
+        BotPayment bt = new BotPayment(socket, account.getAccountID(), account.getPassword(), "FuelStation", amount);
         bt.start();
     }
 
@@ -121,16 +121,16 @@ public class Driver extends Thread {
         return this.car;
     }
 
-     // Método responsável por informar a quantidade de litros que o carro irá abastecer, esta quantidade será definida de acordo com o saldo bancário do motorista, simulando melhor a realidade.
-     public double qtdToFuel(double litros, double saldoDisp) { //
+     // Método responsável por informar a quantidade de litros que o carro irá abastecer, esta quantidade será definida de acordo com o balance bancário do motorista, simulando melhor a realidade.
+     public double qtdToFuel(double litros, double balanceDisp) { //
         double preco = fs.getPreco();
         double precoTotal = litros * preco;
 
-        if (saldoDisp > precoTotal) {
+        if (balanceDisp > precoTotal) {
             return litros;
         } else {
             double precoReduzindo = precoTotal;
-            while (saldoDisp < precoReduzindo) {
+            while (balanceDisp < precoReduzindo) {
                 litros--;
                 precoReduzindo = litros*preco;
                 

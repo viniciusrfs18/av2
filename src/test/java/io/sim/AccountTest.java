@@ -22,49 +22,49 @@ public class AccountTest {
     }
 
     @Test
-    public void testGetSenha() {
-        assertTrue(account.getSenha().matches("\\d{6}"));
+    public void testgetPassword() {
+        assertTrue(account.getPassword().matches("\\d{6}"));
     }
 
     @Test
-    public void testGetSaldo() {
-        assertEquals(1000.0, account.getSaldo(), 0.001);
+    public void testgetBalance() {
+        assertEquals(1000.0, account.getBalance(), 0.001);
     }
 
     @Test
     public void testSetBalance() {
         account.setBalance(1500.0);
-        assertEquals(1500.0, account.getSaldo(), 0.001);
+        assertEquals(1500.0, account.getBalance(), 0.001);
     }
 
     @Test
-    public void testDeposito() {
-        account.deposito(500.0);
-        assertEquals(1500.0, account.getSaldo(), 0.001);
+    public void testdeposit() {
+        account.deposit(500.0);
+        assertEquals(1500.0, account.getBalance(), 0.001);
     }
 
     @Test
-    public void testDepositoComValorNegativo() {
-        account.deposito(-500.0);
-        assertEquals(1000.0, account.getSaldo(), 0.001);
+    public void testdepositComamountNegativo() {
+        account.deposit(-500.0);
+        assertEquals(1000.0, account.getBalance(), 0.001);
     }
 
     @Test
-    public void testSaque() {
-        account.saque(500.0);
-        assertEquals(500.0, account.getSaldo(), 0.001);
+    public void testwithdraw() {
+        account.withdraw(500.0);
+        assertEquals(500.0, account.getBalance(), 0.001);
     }
 
     @Test
-    public void testSaqueComValorNegativo() {
-        account.saque(-500.0);
-        assertEquals(1000.0, account.getSaldo(), 0.001);
+    public void testwithdrawComamountNegativo() {
+        account.withdraw(-500.0);
+        assertEquals(1000.0, account.getBalance(), 0.001);
     }
 
     @Test
-    public void testSaqueComSaldoInsuficiente() {
-        account.saque(1500.0);
-        assertEquals(1000.0, account.getSaldo(), 0.001);
+    public void testwithdrawCombalanceInsuficiente() {
+        account.withdraw(1500.0);
+        assertEquals(1000.0, account.getBalance(), 0.001);
     }
 
 }

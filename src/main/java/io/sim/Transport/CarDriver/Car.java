@@ -34,8 +34,8 @@ public class Car extends Vehicle implements Runnable {
     private Socket socket;
     private int companyServerPort;
     private String companyServerHost; 
-	private DataInputStream entrada;
-	private DataOutputStream saida;
+	private DataInputStream input;
+	private DataOutputStream output;
 	
 	// atributos da classe
 	private String idCar; // id do carro
@@ -112,17 +112,17 @@ public class Car extends Vehicle implements Runnable {
 
 		try {
             socket = new Socket(this.companyServerHost, this.companyServerPort);
-            entrada = new DataInputStream(socket.getInputStream());
-			saida = new DataOutputStream(socket.getOutputStream());
+            input = new DataInputStream(socket.getInputStream());
+			output = new DataOutputStream(socket.getOutputStream());
 
 			// System.out.println(this.idCar + " conectado!!");
 
 			while (!finalizado) {
 				// Recebendo Rota
 				// Manda "aguardando" da primeira vez
-				saida.writeUTF(criarJSONDrivingData(drivingDataAtual));
+				output.writeUTF(criarJSONDrivingData(drivingDataAtual));
 				System.out.println(this.idCar + " aguardando rota");
-				rota = extraiRota(entrada.readUTF());
+				rota = extraiRota(input.readUTF());
 
 				if(rota.getID().equals("-1")) {
 					System.out.println(this.idCar +" - Sem rotas a receber.");
@@ -157,7 +157,7 @@ public class Car extends Vehicle implements Runnable {
 						System.out.println(this.idCar + " acabou a rota.");
 						//this.ts.setOn_off(false);
 						this.carStatus = "finalizado";
-						saida.writeUTF(criarJSONDrivingData(drivingDataAtual));
+						output.writeUTF(criarJSONDrivingData(drivingDataAtual));
 						this.on_off = false;
 						break;
 					} 
@@ -175,7 +175,7 @@ public class Car extends Vehicle implements Runnable {
 							this.carStatus = "rodando";
 						}
 						
-						saida.writeUTF(criarJSONDrivingData(drivingDataAtual));
+						output.writeUTF(criarJSONDrivingData(drivingDataAtual));
 						
 						if(this.carStatus.equals("finalizado")) {
 							this.on_off = false;
@@ -197,8 +197,8 @@ public class Car extends Vehicle implements Runnable {
 				}
 			}
 			System.out.println("Encerrando: " + idCar);
-			entrada.close();
-			saida.close();
+			input.close();
+			output.close();
 			socket.close();
 			this.ts.setTerminado(true);
         } catch (Exception e) {

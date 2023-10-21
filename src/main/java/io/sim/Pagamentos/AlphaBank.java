@@ -6,28 +6,25 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-import org.apache.poi.sl.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class AlphaBank extends Thread {
     
-    private ServerSocket serverAlphaBank; //Socket do Servidor (AlphaBank)
-    private static ArrayList<Account> accounts; //ArrayList com todas as contas criadas
-    private static ArrayList<TransferData> registrosPendentes; 
-    static int qtdClientes = 0;
+    private ServerSocket serverAlphaBank; // Socket do Servidor (AlphaBank)
+    private static ArrayList<Account> accounts; // ArrayList com todas as contas criadas
+    private static ArrayList<TransferData> records; 
 
     // Atributo de sincronização
-    private Object sincroniza;
+    private Object sync;
 
     public AlphaBank(ServerSocket serverSocket) throws IOException {
 
         this.serverAlphaBank = serverSocket;
         accounts = new ArrayList<Account>();
-        registrosPendentes = new ArrayList<TransferData>();
-        this.sincroniza = new Object();
+        records = new ArrayList<TransferData>();
+        this.sync = new Object();
         createTransfSheet();
     }
 
@@ -41,7 +38,6 @@ public class AlphaBank extends Thread {
             while (true) {
 
                 Socket clientSocket = serverAlphaBank.accept();
-                System.out.println("Cliente conectado: " + clientSocket.getInetAddress());
 
                 AccountCommunication accountManipulator = new AccountCommunication(clientSocket, this);
                 accountManipulator.start();
@@ -54,6 +50,7 @@ public class AlphaBank extends Thread {
     
     }
 
+    // Método para adicionar uma conta à lista de contas
     public static void addAccount(Account conta) {
 
         synchronized (AlphaBank.class) {
@@ -68,14 +65,15 @@ public class AlphaBank extends Thread {
 
     }
 
+    // Método para verificar se o login é bem-sucedido
     public boolean conect(String[] login) {
 
         String accountID = login[0];
-        String senha = login[1];
+        String password = login[1];
 
         for (Account account : accounts) {
             if (account.getAccountID().equals(accountID)) {
-                if (account.getSenha().equals(senha)) {
+                if (account.getPassword().equals(password)) {
                     return true;
                 }
             }
@@ -85,31 +83,29 @@ public class AlphaBank extends Thread {
 
     }
 
-    public boolean transferencia(String pagId, String recId, double valor) {
-        Account pagador = searchAccount(pagId);
-        Account recebedor = searchAccount(recId);
+    // Método para realizar uma transferência entre contas
+    public boolean transferencia(String pagId, String recId, double amount) {
+        Account payer = searchAccount(pagId);
+        Account receiver = searchAccount(recId);
         
-        synchronized (sincroniza) {
+        synchronized (sync) {
 
-            if (pagador != null && recebedor != null) {
-                if (pagador.getSaldo() >= valor) {
+            if (payer != null && receiver != null) {
+                if (payer.getBalance() >= amount) {
 
-                    pagador.saque(valor);
-                    System.out.println("PAGADOR - Saldo pós pagamento: " + pagador.getSaldo()); 
-                    
-                    recebedor.deposito(valor);
-                    System.out.println("RECEBEDOR - Saldo pós pagamento: " + recebedor.getSaldo());
+                    payer.withdraw(amount); 
+                    receiver.deposit(amount);
                     return true;
                 
                 } else {
                 
-                    System.out.println("AB - Problemas de transferencia: " + pagador + " nao tem saldo suficiente");
+                    System.out.println(payer + " não tem saldo suficiente para realizar a transação");
                 
                 }
 
             } else {
                 
-                System.out.println("AB - Problemas de transferencia: ID do recebedor");
+                System.out.println("ID do pagador ou recebedor é NULO");
             
             }
             return false;
@@ -117,6 +113,7 @@ public class AlphaBank extends Thread {
 
     }
 
+    // Método para pesquisar uma conta por ID
     private static Account searchAccount(String accountID) {
 
         for (Account account : accounts) {
@@ -128,45 +125,48 @@ public class AlphaBank extends Thread {
 
     }
 
-    public void adicionaRegistros(TransferData registerPag) {
+    // Método para adicionar registros de transferência
+    public void addRecords(TransferData registerPag) {
 
         registerPag.setTimestamp();
-        registerPag.setAccountID(registerPag.getPagador());
-        registrosPendentes.add(registerPag);
-        TransferData registerReceb = new TransferData(registerPag.getPagador(), "Recebimento", registerPag.getRecebedor(), registerPag.getvalor());
+        registerPag.setAccountID(registerPag.getpayer());
+        records.add(registerPag);
+
+        TransferData registerReceb = new TransferData(registerPag.getpayer(), "Recebimento", registerPag.getreceiver(), registerPag.getamount());
         registerReceb.setTimestamp();
-        registerReceb.setAccountID(registerPag.getRecebedor());
-        registrosPendentes.add(registerReceb);
-    
+        registerReceb.setAccountID(registerPag.getreceiver());
+        records.add(registerReceb);
     }
 
-    public static int numeroDeRegistrosPend() {
+    // Método para verificar o número de registros pendentes
+    public static int pendingRecords() {
 
         synchronized (AlphaBank.class) {
-            if (registrosPendentes != null) {
-                return registrosPendentes.size();
+            if (records != null) {
+                return records.size();
             }
             return 0;
         }
 
     }
 
-    public static TransferData pegarRegistro(String accountID) {
+    // Método para obter um registro com base no ID da conta
+    public static TransferData getRecord(String accountID) {
 
         synchronized (AlphaBank.class) {
-            if (registrosPendentes != null) {
-                for (int i = 0; i < registrosPendentes.size(); i++) {
-                    if (accountID.equals(registrosPendentes.get(i).getAccountID())) {
-                        return registrosPendentes.remove(i);
+            if (records != null) {
+                for (int i = 0; i < records.size(); i++) {
+                    if (accountID.equals(records.get(i).getAccountID())) {
+                        return records.remove(i);
                     }
                 }
-                System.out.println("Não há registros para essa conta");
             }
             return null;
         }
 
     }
 
+    // Método para criar uma planilha de transferências
     private void createTransfSheet(){
         
         String nomeDoArquivo = "transacoes.xlsx";
@@ -180,10 +180,10 @@ public class AlphaBank extends Thread {
             // Crie o cabeçalho na primeira linha
             Row headerRow = sheet.createRow(0);
             headerRow.createCell(0).setCellValue("Account ID");
-            headerRow.createCell(1).setCellValue("Pagador");
-            headerRow.createCell(2).setCellValue("Operacao");
-            headerRow.createCell(3).setCellValue("Recebedor");
-            headerRow.createCell(4).setCellValue("Valor");
+            headerRow.createCell(1).setCellValue("payer");
+            headerRow.createCell(2).setCellValue("operation");
+            headerRow.createCell(3).setCellValue("receiver");
+            headerRow.createCell(4).setCellValue("amount");
 
             // Salve a planilha com o cabeçalho
             workbook.write(outputStream);
