@@ -87,7 +87,7 @@ public class EnvSimulator extends Thread {
 			// Roda o metodo join em todos os Drivers, espera todos os drivers terminarem a execução
 			ArrayList<Driver> drivers = driverCreator.criaListaDrivers(numDrivers, fuelStation, acquisitionRate, sumo, host, portaCompany, portaAlphaBank);
 			
-			criaSheet(drivers);
+			createSheet(drivers);
 
 			for(int i = 0; i < drivers.size(); i++) {
 				drivers.get(i).start();
@@ -113,7 +113,7 @@ public class EnvSimulator extends Thread {
 
 	// Método responsável pela criação da Planilha que irá conter os dados dos Motoristas,
 	// Cria uma Sheet para cada Driver criado
-	private void criaSheet(ArrayList<Driver> drivers){
+	private void createSheet(ArrayList<Driver> drivers){
 		String nomeDoArquivo = "carData.xlsx";
 
         try (Workbook workbook = new XSSFWorkbook()) {

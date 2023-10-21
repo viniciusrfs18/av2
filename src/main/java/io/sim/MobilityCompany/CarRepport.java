@@ -2,34 +2,27 @@ package io.sim.MobilityCompany;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.concurrent.Semaphore;
-
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.json.JSONObject;
 
 import io.sim.Transport.CarDriver.DrivingData;
 import io.sim.Transport.Rotas.Rota;
 
 public class CarRepport extends Thread {
-    private Socket carSocket;
-    private DataInputStream input;
-    private DataOutputStream output;
-    private Company company;
+    private Socket carSocket;       // Socket para comunicação com o carro
+    private DataInputStream input;  // Stream de entrada para receber dados do carro
+    private DataOutputStream output; // Stream de saída para enviar dados ao carro
+    private Company company;        // Instância da empresa de mobilidade
 
-    // Atributos para syncção
+    // Atributo para sincronização
     private Object sync = new Object();
 
     public CarRepport(Socket _carSocket, Company _company) {
         this.company = _company;
         this.carSocket = _carSocket;
         try {
-            // variaveis de input e output do servidor
+            // Variáveis de input e output do servidor
             input = new DataInputStream(carSocket.getInputStream());
             output = new DataOutputStream(carSocket.getOutputStream());
         } catch (IOException e) {
@@ -41,60 +34,54 @@ public class CarRepport extends Thread {
 
     @Override
     public void run() {
-
         try {
-            String StatusDoCarro = "";
-            double distanciaPercorrida = 0;
+            String status = "";
+            double distance = 0;
 
-            // loop principal
-            while(!StatusDoCarro.equals("encerrado")) {
-                
-                DrivingData comunicacao = extraiDrivingData(input.readUTF());
-                StatusDoCarro = comunicacao.getCarStatus(); // lê solicitacao do cliente
-                
-                company.sendComunicacao(comunicacao);
+            while (!status.equals("encerrado")) {
 
-                double latInicial = comunicacao.getLatInicial();
-                double lonInicial = comunicacao.getLonInicial();
-                double latAtual = comunicacao.getLatAtual();
-                double lonAtual = comunicacao.getLonAtual();
+                DrivingData com = extractDrivingData(input.readUTF());
+                status = com.getCarStatus(); // Lê solicitação do cliente
 
-                double distancia = calculaDistancia(latInicial, lonInicial, latAtual, lonAtual);
+                company.sendCommunication(com);
 
-                //System.out.println(comunicacao.getCarID() + " percorreu " + distancia + " metros");
-		        
-                if (distancia > (distanciaPercorrida + 1000)) {
-			        distanciaPercorrida += 1000;
-                    String driverID = comunicacao.getDriverID();
+                double latInicial = com.getLatInicial();
+                double lonInicial = com.getLonInicial();
+                double latAtual = com.getLatAtual();
+                double lonAtual = com.getLonAtual();
+
+                double currentDistance = calculateDistance(latInicial, lonInicial, latAtual, lonAtual);
+
+                if (currentDistance > (distance + 1000)) {
+                    distance += 1000;
+                    String driverID = com.getDriverID();
                     company.oneKmPay(driverID);
-		        }
-                
-                if (StatusDoCarro.equals("aguardando")) {
-                
-                    if(!Company.routesAvaliable()) {
-                        System.out.println("SMC - Sem mais rotas para liberar.");
+                }
+
+                if (status.equals("aguardando")) {
+
+                    if (!Company.routesAvaliable()) {
+                        System.out.println("Sem mais rotas disponíveis");
                         Rota rota = new Rota("-1", "00000");
-                        output.writeUTF(criaJSONRota(rota));
+                        output.writeUTF(routeJSON(rota));
                         break;
                     }
 
-                    if(Company.routesAvaliable()) {
+                    if (Company.routesAvaliable()) {
                         synchronized (sync) {
-                            Rota response = company.executarRota();
-                            output.writeUTF(criaJSONRota(response));
+                            Rota response = company.execRoute();
+                            output.writeUTF(routeJSON(response));
                         }
                     }
-                
-                } else if(StatusDoCarro.equals("finalizado")) {
 
-                    String routeID = comunicacao.getRouteIDSUMO();
-                    System.out.println("SMC - Rota " + routeID + " finalizada.");
-                    company.terminarRota(routeID);
-                    distanciaPercorrida = 0;
-                
-                } else if(StatusDoCarro.equals("rodando")) {
-                    
-                } else if (StatusDoCarro.equals("encerrado")) {
+                } else if (status.equals("finalizado")) {
+
+                    String routeID = com.getRouteIDSUMO();
+                    company.endRoute(routeID);
+                    distance = 0;
+
+                } else if (status.equals("rodando")) {
+                } else if (status.equals("encerrado")) {
                     break;
                 }
             }
@@ -105,40 +92,42 @@ public class CarRepport extends Thread {
             carSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
-        } 
+        }
     }
 
     // Método responsável por calcular a distância percorrida pelo Carro com base nas latitudes.
-    private double calculaDistancia(double lat1, double lon1, double lat2, double lon2) {
-		double raioTerra = 6371000;
-	
-		// Diferenças das latitudes e longitudes
-		double diferancaLat = Math.toRadians(lat2 - lat1);
-		double diferancaLon = Math.toRadians(lon2 - lon1);
-	
-		// Fórmula de Haversine
-		double a = Math.sin(diferancaLat / 2) * Math.sin(diferancaLat / 2) +
-				   Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-				   Math.sin(diferancaLon / 2) * Math.sin(diferancaLon / 2);
-		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-		double distancia = raioTerra * c;
-	
-		return distancia;
-	}
-    
-    private String criaJSONRota(Rota rota) {
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        double raioTerra = 6371000;
+
+        // Diferenças das latitudes e longitudes
+        double latDif = Math.toRadians(lat2 - lat1);
+        double lonDif = Math.toRadians(lon2 - lon1);
+
+        // Fórmula de Haversine
+        double a = Math.sin(latDif / 2) * Math.sin(latDif / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(lonDif / 2) * Math.sin(lonDif / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double currentDistance = raioTerra * c;
+
+        return currentDistance;
+    }
+
+    // Converte uma instância de Rota em um objeto JSON e retorna uma representação em string
+    private String routeJSON(Rota rota) {
         JSONObject rotaJSON = new JSONObject();
         rotaJSON.put("ID da Rota", rota.getID());
         rotaJSON.put("Edges", rota.getEdges());
         return rotaJSON.toString();
     }
 
-    private DrivingData extraiDrivingData(String drivingDataJSON) {
-		JSONObject drivingDataJSONObj = new JSONObject(drivingDataJSON);
+    // Extrai dados de condução a partir de uma representação JSON e retorna um objeto de DrivingData
+    private DrivingData extractDrivingData(String drivingDataJSON) {
+        JSONObject drivingDataJSONObj = new JSONObject(drivingDataJSON);
         String carID = drivingDataJSONObj.getString("Car ID");
         String driverID = drivingDataJSONObj.getString("Driver ID");
         String carStatus = drivingDataJSONObj.getString("Car Status");
-		double latInicial = drivingDataJSONObj.getDouble("Latitude Inicial");
+        double latInicial = drivingDataJSONObj.getDouble("Latitude Inicial");
         double lonInicial = drivingDataJSONObj.getDouble("Longitude Inicial");
         double latAtual = drivingDataJSONObj.getDouble("Latitude Atual");
         double lonAtual = drivingDataJSONObj.getDouble("Longitude Atual");
@@ -155,7 +144,8 @@ public class CarRepport extends Thread {
         double fuelPrice = drivingDataJSONObj.getDouble("FuelPrice");
         double Co2Emission = drivingDataJSONObj.getDouble("Co2Emission");
         double HCEmission = drivingDataJSONObj.getDouble("HCEmission");
-        int personCapacity = drivingDataJSONObj.getInt("PersonCapacity");
+        int personCapacity = drivingDataJSONObj
+.getInt("PersonCapacity");
         int personNumber = drivingDataJSONObj.getInt("PersonNumber");
 
         DrivingData drivingData = new DrivingData(carID, driverID, carStatus, latInicial, lonInicial, latAtual, lonAtual, timeStamp, 

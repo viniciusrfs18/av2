@@ -50,12 +50,12 @@ public class CompanyTest {
     }
 
     @Test
-    public void testGetPreco() {
+    public void testGetprice() {
         // Teste do método stillOnSUMO()
-        double expectedPreco = 3.25; // Substitua pelo amount esperado do preço do litro de gasolina.
-        double actualPreco = company.getPreco();
+        double expectedprice = 3.25; // Substitua pelo amount esperado do preço do litro de gasolina.
+        double actualprice = company.getprice();
 
-        assertEquals(expectedPreco, actualPreco, 0.01);
+        assertEquals(expectedprice, actualprice, 0.01);
     }
 
 }

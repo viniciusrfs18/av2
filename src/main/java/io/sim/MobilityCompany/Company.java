@@ -2,17 +2,10 @@ package io.sim.MobilityCompany;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import it.polito.appeal.traci.SumoTraciConnection;
 import de.tudresden.sumo.cmd.Vehicle;
@@ -34,9 +27,9 @@ public class Company extends Thread {
 
     // Atributos da classe
     private ArrayList<Rota> rotasDisp;
-    private ArrayList<Rota> rotasEmExec;
-    private ArrayList<Rota> rotasTerminadas;
-    private double preco;
+    private ArrayList<Rota> routesInExec;
+    private ArrayList<Rota> finishedRoutes;
+    private double price;
     private static int numDrivers;
     private static ArrayList<DrivingData> dd;
 
@@ -61,9 +54,9 @@ public class Company extends Thread {
         // Atributos da classe
         this.rotasDisp = rotas;
 		//System.out.println("Rotas: "+ rotasDisp.size()+" rotas disponiveis");
-        rotasEmExec = new ArrayList<Rota>();
-        rotasTerminadas = new ArrayList<Rota>();
-        preco = 3.25;
+        routesInExec = new ArrayList<Rota>();
+        finishedRoutes = new ArrayList<Rota>();
+        price = 3.25;
         numDrivers = _numDrivers;
         dd = new ArrayList<DrivingData>();
 
@@ -99,7 +92,7 @@ public class Company extends Thread {
                 }
 
                 // Verifica se ainda tem roas disponíveis
-                if(rotasDisp.size() == 0 && rotasEmExec.size() == 0) {
+                if(rotasDisp.size() == 0 && routesInExec.size() == 0) {
                     System.out.println("Rotas terminadas");
                     rotasDisponiveis = false;
                 }
@@ -108,12 +101,10 @@ public class Company extends Thread {
                 if(conectandoCars) {
                     boolean start = true;
                     for(int i = 0; i < numDrivers; i++) {
-                        // conecta os clientes -> IMP mudar para ser feito paralelamente (ou n)
-                        System.out.println("Company - Esperando para conectar " + (i + 1));
+                       
                         Socket socket = serverSocket.accept();
-                        System.out.println("Car conectado");
 
-                        // Cria uma thread para comunicacao de cada Car
+                        // Cria uma thread para com de cada Car
                         CarRepport cr = new CarRepport(socket, this);
                         cr.start();
 
@@ -123,17 +114,15 @@ public class Company extends Thread {
                             start = false;
                         }
                     }
-                    System.out.println("Company: Todos os drivers criados");
                     conectandoCars = false;
                 }
 
-                System.out.println(account.getAccountID() + " tem R$" + account.getBalance() + " de balance");
             }
         }
         catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Encerrando a Company...");
+        System.out.println("Encerrando a Company.");
     }
 
     // Método responsável por retornar a informação
@@ -142,7 +131,7 @@ public class Company extends Thread {
     }
 
     public boolean rotasDispVazio(){
-        return (rotasEmExec.isEmpty());
+        return (routesInExec.isEmpty());
     }
 
     // Método responsável por verificar se o carro passado ainda existe no SUMO, ele deve existir pois o simulador estava apresentando problemas 
@@ -160,47 +149,52 @@ public class Company extends Thread {
         }
 	}
 
-    // Libera uma rota para o cliente que a solicitou. Para isso, remove de "rotasDisp" e adiciona em "rotasEmExec"
-    public Rota executarRota() {
+    // Libera uma rota para o cliente que a solicitou. Para isso, remove de "rotasDisp" e adiciona em "routesInExec"
+    public Rota execRoute() {
         synchronized (sync) {
             Rota rota = rotasDisp.remove(0);
-            rotasEmExec.add(rota);
+            routesInExec.add(rota);
             return rota;
         }
     }
 
     // Método responsável por adicionar a rota terminada ao ArrayList de Rotas Finalizadas
-    public void terminarRota(String _routeID) {
+    public void endRoute(String _routeID) {
         synchronized (sync) {
             System.out.println("Arquivando rota: " + _routeID);
             int i = 0;
-            while (!rotasEmExec.get(i).getID().equals(_routeID)) {
+            while (!routesInExec.get(i).getID().equals(_routeID)) {
                 i++;
             }
-            rotasTerminadas.add(rotasEmExec.remove(i));
+            finishedRoutes.add(routesInExec.remove(i));
         }
     }
 
     // Método responsável por criar o BotPayment que realizará o pagamento por 1Km percorrido ao motorista.
     public void oneKmPay(String driverID) throws IOException {
-        BotPayment bt = new BotPayment(socket, "Company",  account.getPassword(), driverID, preco);
+        BotPayment bt = new BotPayment(socket, "Company",  account.getPassword(), driverID, price);
         bt.start();
     }
 
-    public synchronized void sendComunicacao(DrivingData comunicacao) {
-        dd.add(comunicacao);
+    // Método para enviar informações de comunicação aos carros (DrivingData)
+    // Synchronized para garantir o acesso seguro a partir de várias threads simultaneamente.
+    public synchronized void sendCommunication(DrivingData com) {
+        dd.add(com); // Adiciona o objeto com à lista dd para ser processado pelos carros.
     }
 
+    // Verifica se existem relatórios (DrivingData) disponíveis.
     public boolean temReport() {
-        return dd.isEmpty();
+        return dd.isEmpty(); // Retorna true se a lista dd estiver vazia, caso contrário, retorna false.
+    }
+    
+    // Método para pegar um relatório (DrivingData) da lista.
+    public DrivingData pegacom() {
+        return dd.remove(0); // Remove o primeiro relatório da lista e o retorna.
     }
 
-    public DrivingData pegaComunicacao() {
-        return dd.remove(0);
-    }
-
-    public double getPreco(){
-        return this.preco;
+    // Método para obter o preço por quilômetro utilizado para calcular os pagamentos aos motoristas.
+    public double getprice() {
+        return this.price; // Retorna o valor armazenado no atributo price.
     }
 
 }
