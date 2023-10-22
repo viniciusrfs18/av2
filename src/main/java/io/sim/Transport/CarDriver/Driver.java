@@ -97,7 +97,7 @@ public class Driver extends Thread {
                     }
                 }
 
-                System.out.println(account.getAccountID() + " tem R$" + account.getBalance() + " de balance");
+                //System.out.println(account.getAccountID() + " tem R$" + account.getBalance() + " de balance");
             }
             
             car.setFinalizado(true);  
