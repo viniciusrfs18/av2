@@ -112,7 +112,7 @@ public class Car extends Vehicle implements Runnable {
 	public void run() {
 		System.out.println(this.idCar + " iniciando");
 		
-		SetFuelLevel sf = new SetFuelLevel(this, (0.01*speed)); //VERIFICAR CONSUMO
+		SetFuelLevel sf = new SetFuelLevel(this, (0.001*speed)); //VERIFICAR CONSUMO
 		sf.start();
 
 		try {
