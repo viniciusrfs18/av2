@@ -112,7 +112,7 @@ public class Car extends Vehicle implements Runnable {
 	public void run() {
 		System.out.println(this.idCar + " iniciando");
 		
-		SetFuelLevel sf = new SetFuelLevel(this, 0.05); //VERIFICAR CONSUMO
+		SetFuelLevel sf = new SetFuelLevel(this, (0.01*speed)); //VERIFICAR CONSUMO
 		sf.start();
 
 		try {
@@ -406,9 +406,9 @@ public class Car extends Vehicle implements Runnable {
 	// Método que gera uma velocidade aleatória dentro de um intervalo
 	public double setRandomSpeed(){
 		Random random = new Random();
-		double range = 9.5 - 2.5;
+		double range = 25 - 15;
 		double scaled = random.nextDouble() * range;
-		double generatedNumber = scaled + 2.5;
+		double generatedNumber = scaled + 15;
 		return generatedNumber;
 	}
 

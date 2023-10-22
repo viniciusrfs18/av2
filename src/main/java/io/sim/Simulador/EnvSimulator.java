@@ -46,7 +46,7 @@ public class EnvSimulator extends Thread {
 		portaCompany = 23415;
 		portaAlphaBank = 54321;
 		acquisitionRate = 500;
-		numDrivers = 10;
+		numDrivers = 100;
 		rotasXML = "map/map.rou.alt.xml";
 	
 	}
