@@ -8,10 +8,6 @@ import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.sim.MobilityCompany.Company;
-import io.sim.Transport.Fuel.FuelStation;
-import io.sim.Transport.Rotas.Rota;
-import io.sim.Transport.Rotas.routeCreator;
 import it.polito.appeal.traci.SumoTraciConnection;
 
 public class CompanyTest {

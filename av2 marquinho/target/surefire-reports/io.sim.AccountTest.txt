@@ -1,0 +1,16 @@
+-------------------------------------------------------------------------------
+Test set: io.sim.AccountTest
+-------------------------------------------------------------------------------
+Tests run: 4, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.005 s <<< FAILURE! - in io.sim.AccountTest
+io.sim.AccountTest.testSaque()  Time elapsed: 0.001 s  <<< FAILURE!
+java.lang.NullPointerException: Cannot invoke "io.sim.bank.Account.saque(double)" because "this.account" is null
+	at io.sim.AccountTest.testSaque(AccountTest.java:30)
+
+io.sim.AccountTest.testDeposito()  Time elapsed: 0 s  <<< FAILURE!
+java.lang.NullPointerException: Cannot invoke "io.sim.bank.Account.deposito(double)" because "this.account" is null
+	at io.sim.AccountTest.testDeposito(AccountTest.java:23)
+
+io.sim.AccountTest.testAddHistorico()  Time elapsed: 0 s  <<< FAILURE!
+java.lang.NullPointerException: Cannot invoke "io.sim.bank.Account.addHistorico(io.sim.bank.TransferData)" because "this.account" is null
+	at io.sim.AccountTest.testAddHistorico(AccountTest.java:38)
+

@@ -2,8 +2,6 @@ package io.sim;
 
 import static org.junit.Assert.*;
 import org.junit.Test;
-import io.sim.Transport.Rotas.Rota;
-import io.sim.Transport.Rotas.routeCreator;
 
 import java.util.ArrayList;
 

@@ -87,6 +87,12 @@
       <artifactId>libsumo-1.18.0</artifactId>
       <version>libsumo-1.18.0</version>
     </dependency>
+    
+    <dependency>
+	    <groupId>javax.xml</groupId>
+	    <artifactId>jaxp-api</artifactId>
+	    <version>1.4</version>
+	</dependency>
 
     <dependency>
       <groupId>libsumo-1.18.0-sources</groupId>

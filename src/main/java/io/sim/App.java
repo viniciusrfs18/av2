@@ -1,7 +1,5 @@
 package io.sim;
 
-import io.sim.Simulador.EnvSimulator;
-
 /**
  * Hello world!
  *

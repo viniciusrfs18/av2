@@ -3,10 +3,10 @@ package io.sim;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
+
+import io.sim.CarDriver.Driver;
+import io.sim.CarDriver.driverCreator;
 import it.polito.appeal.traci.SumoTraciConnection;
-import io.sim.Transport.Fuel.FuelStation;
-import io.sim.Transport.CarDriver.Driver;
-import io.sim.Transport.CarDriver.driverCreator;
 
 import java.io.IOException;
 import java.util.ArrayList;
